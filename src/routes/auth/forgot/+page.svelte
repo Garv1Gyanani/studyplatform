@@ -20,7 +20,12 @@
 			if (resetError) throw resetError;
 			success = true;
 		} catch (e: any) {
-			error = e.message;
+			const message = e.message || '';
+			if (message.includes('Email rate limit exceeded')) {
+				error = 'Too many requests. Please wait a few minutes before requesting another reset link.';
+			} else {
+				error = message;
+			}
 		} finally {
 			loading = false;
 		}

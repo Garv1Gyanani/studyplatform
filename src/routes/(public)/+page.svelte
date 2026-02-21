@@ -20,7 +20,7 @@
 </script>
 
 <!-- Hero Section -->
-<div class="relative overflow-hidden bg-white pb-20 pt-24 sm:pb-32 sm:pt-40 lg:pb-40 lg:pt-48">
+<div class="relative overflow-hidden bg-white pb-20 pt-12 sm:pb-32 sm:pt-16 lg:pb-40 lg:pt-20">
 	<!-- Dynamic Background -->
 	<div class="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(59,130,246,0.05)_0%,transparent_100%)]"></div>
 	<div class="absolute left-1/2 top-0 -z-10 h-[800px] w-[1600px] -translate-x-1/2 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] blur-3xl"></div>
@@ -127,7 +127,7 @@
 </div>
 
 <!-- Features Section -->
-<section class="py-32 bg-slate-50 overflow-hidden">
+<section class="py-20 bg-slate-50 overflow-hidden">
 	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 			<div class="space-y-8">
@@ -180,7 +180,7 @@
 </section>
 
 <!-- Final CTA -->
-<section class="py-40 relative">
+<section class="py-24 relative">
 	<div class="absolute inset-0 -z-10">
 		<div class="absolute inset-0 bg-slate-900"></div>
 		<div class="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.2)_0%,transparent_70%)] blur-3xl"></div>
@@ -207,7 +207,7 @@
 </section>
 
 <!-- Footer -->
-<footer class="bg-white py-20 border-t border-slate-100">
+<footer class="bg-white py-12 border-t border-slate-100">
 	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-10">
 		<div class="flex items-center gap-2">
 			<div class="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg">E</div>

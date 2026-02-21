@@ -36,7 +36,7 @@
 	);
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-5xl mx-auto space-y-12">
+<div class="px-4 sm:px-8 py-10 max-w-6xl mx-auto space-y-10">
 	<div class="space-y-6 text-center">
 		<div class="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-600 text-white shadow-xl shadow-blue-200 mb-2">
 			<Megaphone size={32} />

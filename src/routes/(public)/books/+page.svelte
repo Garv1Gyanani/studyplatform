@@ -36,7 +36,7 @@
 	);
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-7xl mx-auto space-y-16">
+<div class="px-4 sm:px-8 py-10 max-w-7xl mx-auto space-y-10">
 	<!-- Header -->
 	<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-slate-900 rounded-[48px] p-10 sm:p-20 relative overflow-hidden text-white shadow-2xl">
 		<div class="absolute right-0 top-0 h-96 w-96 bg-blue-600 blur-[120px] opacity-20"></div>

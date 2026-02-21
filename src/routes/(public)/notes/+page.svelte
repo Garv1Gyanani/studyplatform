@@ -36,7 +36,7 @@
 	);
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-6xl mx-auto space-y-12">
+<div class="px-4 sm:px-8 py-10 max-w-6xl mx-auto space-y-10">
 	<div class="space-y-6">
 		<div class="flex items-center gap-4">
 			<div class="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-200">

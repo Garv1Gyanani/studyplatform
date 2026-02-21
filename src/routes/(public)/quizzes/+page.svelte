@@ -35,7 +35,7 @@
 	);
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-6xl mx-auto space-y-16">
+<div class="px-4 sm:px-8 py-10 max-w-6xl mx-auto space-y-10">
 	<div class="flex flex-col md:flex-row md:items-center justify-between gap-10">
 		<div class="space-y-4">
 			<div class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 shadow-xl shadow-blue-200">

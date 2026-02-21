@@ -80,12 +80,18 @@
 			}
 		} catch (e: any) {
 			console.error('Auth error:', e);
-			if (e.message.includes('User already registered')) {
+			const message = e.message || '';
+			
+			if (message.includes('User already registered')) {
 				error = 'This email is already registered. Try logging in instead.';
-			} else if (e.message.includes('Invalid login credentials')) {
+			} else if (message.includes('Invalid login credentials')) {
 				error = 'Invalid email or password. Please try again.';
+			} else if (message.includes('Email rate limit exceeded')) {
+				error = 'Slow down! Too many requests. Please wait a few minutes before trying again or use social login.';
+			} else if (message.includes('Database error')) {
+				error = 'Service currently unavailable. Please try again later.';
 			} else {
-				error = e.message;
+				error = message;
 			}
 		} finally {
 			loading = false;

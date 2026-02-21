@@ -34,7 +34,7 @@
 	);
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-6xl mx-auto space-y-16">
+<div class="px-4 sm:px-8 py-10 max-w-6xl mx-auto space-y-10">
 	<!-- Hero Header -->
 	<div class="space-y-6 text-center">
 		<div class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest border border-blue-100">

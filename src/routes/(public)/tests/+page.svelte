@@ -51,7 +51,7 @@
 	}
 </script>
 
-<div class="px-4 sm:px-8 py-16 max-w-6xl mx-auto space-y-12">
+<div class="px-4 sm:px-8 py-10 max-w-6xl mx-auto space-y-10">
 	<div class="space-y-4 text-center md:text-left">
 		<div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-200 mb-2">
 			<GraduationCap size={32} />
