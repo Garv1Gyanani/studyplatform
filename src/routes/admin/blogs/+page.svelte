@@ -97,7 +97,7 @@
 			<p class="mt-1 text-slate-500">Manage educational articles, news, and insights.</p>
 		</div>
 		<button 
-			onclick={() isFormOpen = true}
+			onclick={() => isFormOpen = true}
 			class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
 		>
 			<Plus size={18} />

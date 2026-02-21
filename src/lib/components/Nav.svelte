@@ -1,25 +1,71 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
-	import { Search, Bell, Menu, X, User, LogOut, LayoutDashboard, Settings } from 'lucide-svelte';
+	import { 
+		Search, 
+		Bell, 
+		Menu, 
+		X, 
+		User, 
+		LogOut, 
+		LayoutDashboard, 
+		Settings, 
+		Star,
+		Zap,
+		ChevronRight,
+		Loader2
+	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { onMount } from 'svelte';
 	import { openLogin, openSignup } from '$lib/stores/auth';
+	import { fade, fly, slide } from 'svelte/transition';
+	import { page } from '$app/state';
 
 	let isMenuOpen = $state(false);
 	let isProfileOpen = $state(false);
+	let isSearchOpen = $state(false);
 	let user = $state<any>(null);
+	let profile = $state<any>(null);
+	let searchQuery = $state('');
+	let searchResults = $state<any[]>([]);
+	let searching = $state(false);
 
 	onMount(() => {
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			user = session?.user ?? null;
+			if (user) fetchProfile();
 		});
 
 		const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
 			user = session?.user ?? null;
+			if (user) fetchProfile();
+			else profile = null;
 		});
 
 		return () => subscription.unsubscribe();
 	});
+
+	async function fetchProfile() {
+		const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+		profile = data;
+	}
+
+	async function handleSearch() {
+		if (searchQuery.length < 2) {
+			searchResults = [];
+			return;
+		}
+		searching = true;
+		
+		// Search across multiple content types (simulated/combined)
+		const { data: videos } = await supabase.from('videos').select('id, title').ilike('title', `%${searchQuery}%`).limit(3);
+		const { data: blogs } = await supabase.from('blogs').select('id, title').ilike('title', `%${searchQuery}%`).limit(3);
+		
+		searchResults = [
+			...(videos?.map(v => ({ id: v.id, title: v.title, type: 'Video' })) || []),
+			...(blogs?.map(b => ({ id: b.id, title: b.title, type: 'Blog' })) || [])
+		];
+		searching = false;
+	}
 
 	const navItems = [
 		{ name: 'Courses', href: '/courses' },
@@ -50,11 +96,20 @@
 				<!-- Desktop Navigation -->
 				<div class="hidden md:ml-8 md:flex md:items-center md:gap-1">
 					{#each navItems as item}
+						{@const isActive = page.url.pathname === item.href}
 						<a
 							href={item.href}
-							class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-blue-600"
+							class={cn(
+								"relative rounded-lg px-4 py-2 text-sm font-bold transition-all",
+								isActive 
+									? "text-blue-600 bg-blue-50" 
+									: "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+							)}
 						>
 							{item.name}
+							{#if isActive}
+								<span class="absolute -bottom-[1px] left-4 right-4 h-0.5 bg-blue-600 rounded-full" in:fade></span>
+							{/if}
 						</a>
 					{/each}
 				</div>
@@ -62,50 +117,70 @@
 
 			<!-- Right side: Search, Auth, User -->
 			<div class="flex items-center gap-4">
-				<button class="hidden rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 lg:block">
-					<Search size={20} />
+				<button 
+					onclick={() => isSearchOpen = true}
+					class="hidden items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-400 transition-all hover:bg-white hover:border-slate-200 lg:flex"
+				>
+					<Search size={16} />
+					<span>Search...</span>
+					<kbd class="ml-2 rounded bg-white px-1.5 py-0.5 text-[10px] text-slate-400 border border-slate-100 uppercase">⌘K</kbd>
 				</button>
 
 				{#if user}
-					<button class="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100">
+					<div class="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 sm:flex">
+						<Star size={14} class="text-amber-500" fill="currentColor" />
+						<span class="text-xs font-black text-slate-900">{profile?.points || 0} XP</span>
+					</div>
+
+					<button class="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100">
 						<Bell size={20} />
+						<span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white"></span>
 					</button>
 
 					<div class="relative">
 						<button
 							onclick={() => (isProfileOpen = !isProfileOpen)}
-							class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 p-1 ring-2 ring-transparent transition-all hover:ring-blue-100"
+							class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 p-1 ring-2 ring-transparent transition-all hover:ring-blue-100"
 						>
-							{#if user.user_metadata?.avatar_url}
-								<img src={user.user_metadata.avatar_url} alt="Avatar" class="h-full w-full rounded-full object-cover" />
+							{#if profile?.avatar_url}
+								<img src={profile.avatar_url} alt="Avatar" class="h-full w-full rounded-full object-cover" />
 							{:else}
-								<User size={20} class="text-slate-500" />
+								<div class="h-full w-full rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
+									{user.email.charAt(0).toUpperCase()}
+								</div>
 							{/if}
 						</button>
 
 						{#if isProfileOpen}
-							<div class="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-black ring-opacity-5 focus:outline-none">
-								<div class="px-4 py-3">
-									<p class="text-xs font-medium text-slate-500">Signed in as</p>
-									<p class="truncate text-sm font-semibold text-slate-900">{user.email}</p>
+							<div 
+								transition:fly={{ y: 10, duration: 150 }}
+								class="absolute right-0 mt-3 w-64 origin-top-right rounded-[32px] border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200 focus:outline-none"
+							>
+								<div class="px-6 py-5">
+									<p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Signed in as</p>
+									<p class="truncate text-basis font-black text-slate-900">{profile?.username || user.email.split('@')[0]}</p>
 								</div>
-								<div class="h-px bg-slate-100 my-1"></div>
-								<a href="/dashboard" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600">
-									<LayoutDashboard size={16} />
-									Dashboard
-								</a>
-								<a href="/settings" class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600">
-									<Settings size={16} />
-									Settings
-								</a>
-								<div class="h-px bg-slate-100 my-1"></div>
-								<button
-									onclick={handleLogout}
-									class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
-								>
-									<LogOut size={16} />
-									Sign out
-								</button>
+								<div class="h-px bg-slate-50 mx-2"></div>
+								<div class="p-2 space-y-1">
+									<a href="/dashboard" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
+										<LayoutDashboard size={18} /> Dashboard
+									</a>
+									<a href="/bookmarks" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
+										<Zap size={18} /> Your Library
+									</a>
+									<a href="/settings" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
+										<Settings size={18} /> Settings
+									</a>
+								</div>
+								<div class="h-px bg-slate-50 mx-2"></div>
+								<div class="p-2">
+									<button
+										onclick={handleLogout}
+										class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-red-500 transition-all hover:bg-red-50"
+									>
+										<LogOut size={18} /> Sign out
+									</button>
+								</div>
 							</div>
 						{/if}
 					</div>
@@ -113,13 +188,13 @@
 					<div class="hidden items-center gap-3 sm:flex">
 						<button 
 							onclick={openLogin}
-							class="text-sm font-semibold text-slate-600 hover:text-slate-900"
+							class="text-sm font-black text-slate-600 hover:text-slate-900 px-4 py-2"
 						>
 							Sign in
 						</button>
 						<button
 							onclick={openSignup}
-							class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 hover:shadow-blue-300 active:scale-95"
+							class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-xl shadow-blue-200 transition-all hover:bg-blue-700 hover:scale-105 active:scale-95"
 						>
 							Get Started
 						</button>
@@ -129,7 +204,7 @@
 				<!-- Mobile menu button -->
 				<button
 					onclick={() => (isMenuOpen = !isMenuOpen)}
-					class="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"
+					class="inline-flex items-center justify-center rounded-2xl p-2 text-slate-500 hover:bg-slate-100 md:hidden transition-all"
 				>
 					{#if isMenuOpen}
 						<X size={24} />
@@ -143,12 +218,12 @@
 
 	<!-- Mobile Navigation -->
 	{#if isMenuOpen}
-		<div class="border-t border-slate-100 bg-white p-4 md:hidden">
-			<div class="space-y-1">
+		<div class="border-t border-slate-100 bg-white p-6 md:hidden" transition:slide>
+			<div class="space-y-2">
 				{#each navItems as item}
 					<a
 						href={item.href}
-						class="block rounded-xl px-4 py-3 text-base font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-blue-600"
+						class="block rounded-2xl px-5 py-4 text-basis font-black text-slate-700 transition-all hover:bg-slate-50 hover:text-blue-600"
 						onclick={() => (isMenuOpen = false)}
 					>
 						{item.name}
@@ -156,16 +231,16 @@
 				{/each}
 			</div>
 			{#if !user}
-				<div class="mt-4 flex flex-col gap-2 pt-4 border-t border-slate-100">
+				<div class="mt-6 flex flex-col gap-3 pt-6 border-t border-slate-100">
 					<button 
 						onclick={() => { isMenuOpen = false; openLogin(); }}
-						class="flex h-12 items-center justify-center rounded-xl bg-slate-50 text-sm font-bold text-slate-700"
+						class="flex h-14 items-center justify-center rounded-2xl bg-slate-50 text-sm font-black text-slate-700 hover:bg-slate-100 transition-all"
 					>
 						Login
 					</button>
 					<button 
 						onclick={() => { isMenuOpen = false; openSignup(); }}
-						class="flex h-12 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-200"
+						class="flex h-14 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black text-white shadow-xl shadow-blue-200"
 					>
 						Create Account
 					</button>
@@ -174,3 +249,80 @@
 		</div>
 	{/if}
 </nav>
+
+<!-- Global Search Overlay -->
+{#if isSearchOpen}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div 
+		class="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-start justify-center p-4 pt-20"
+		onclick={() => isSearchOpen = false}
+		transition:fade={{ duration: 150 }}
+	>
+		<div 
+			class="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden" 
+			onclick={e => e.stopPropagation()}
+			transition:fly={{ y: -20, duration: 300 }}
+		>
+			<div class="relative p-6 border-b border-slate-100">
+				<Search size={24} class="absolute left-10 top-1/2 -translate-y-1/2 text-slate-400" />
+				<input 
+					bind:value={searchQuery}
+					oninput={handleSearch}
+					placeholder="Search for courses, quizzes, or blogs..." 
+					class="w-full pl-16 pr-12 py-5 text-xl font-bold text-slate-900 outline-none placeholder-slate-300"
+					autofocus
+				/>
+				<button 
+					onclick={() => isSearchOpen = false}
+					class="absolute right-10 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900"
+				>
+					<X size={20} />
+				</button>
+			</div>
+			
+			<div class="max-h-[60vh] overflow-y-auto p-4">
+				{#if searching}
+					<div class="flex items-center justify-center py-12">
+						<Loader2 size={32} class="animate-spin text-blue-600" />
+					</div>
+				{:else if searchResults.length > 0}
+					<div class="space-y-2">
+						{#each searchResults as result}
+							<button class="w-full p-4 flex items-center justify-between rounded-3xl hover:bg-slate-50 transition-all text-left">
+								<div class="flex items-center gap-4">
+									<div class="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+										{#if result.type === 'Video'}<Zap size={20} />{:else}<Settings size={20} />{/if}
+									</div>
+									<div>
+										<p class="font-black text-slate-900 line-clamp-1">{result.title}</p>
+										<span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{result.type}</span>
+									</div>
+								</div>
+								<ChevronRight size={20} class="text-slate-300" />
+							</button>
+						{/each}
+					</div>
+				{:else if searchQuery.length > 1}
+					<div class="py-20 text-center">
+						<p class="text-slate-400 font-bold">No results found for "{searchQuery}"</p>
+					</div>
+				{:else}
+					<div class="p-8">
+						<p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 px-4 text-center">Popular Searches</p>
+						<div class="flex flex-wrap gap-2 justify-center">
+							{#each ['React Masterclass', 'Python Basics', 'Quantum Physics', 'Creative Writing', 'Web Design'] as tag}
+								<button 
+									onclick={() => { searchQuery = tag; handleSearch(); }}
+									class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm font-bold text-slate-600 hover:bg-white hover:border-blue-600 hover:text-blue-600 transition-all"
+								>
+									{tag}
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
