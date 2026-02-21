@@ -205,24 +205,3 @@
 		</div>
 	</div>
 </section>
-
-<!-- Footer -->
-<footer class="bg-white py-12 border-t border-slate-100">
-	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-10">
-		<div class="flex items-center gap-2">
-			<div class="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg">E</div>
-			<span class="text-2xl font-black tracking-tight text-slate-900">EduPlatform</span>
-		</div>
-		
-		<nav class="flex gap-10 text-sm font-black text-slate-400 uppercase tracking-widest">
-			<a href="/courses" class="hover:text-slate-900 transition-colors">Courses</a>
-			<a href="/blogs" class="hover:text-slate-900 transition-colors">Journal</a>
-			<a href="/leaderboard" class="hover:text-slate-900 transition-colors">Ranking</a>
-			<a href="/about" class="hover:text-slate-900 transition-colors">About</a>
-		</nav>
-
-		<div class="text-sm font-bold text-slate-400">
-			&copy; 2026 EduPlatform. Built with ❤️ for Students.
-		</div>
-	</div>
-</footer>

@@ -69,7 +69,7 @@
 	];
 </script>
 
-<div class="px-4 sm:px-8 py-10 max-w-7xl mx-auto space-y-12">
+<div class="px-4 sm:px-8 py-10 max-w-7xl mx-auto space-y-10">
 	{#if loading}
 		<div class="flex h-[60vh] items-center justify-center">
 			<Loader2 size={48} class="animate-spin text-blue-600" />
@@ -82,16 +82,16 @@
 	{:else}
 		<!-- Welcome Header -->
 		<div class="flex flex-col md:flex-row md:items-center justify-between gap-6" in:fade>
-			<div>
-				<div class="flex items-center gap-3 mb-2">
+			<div class="space-y-1">
+				<div class="flex items-center gap-3">
 					<div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg">
 						{profile?.username?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
 					</div>
-					<h1 class="text-4xl font-black text-slate-900 tracking-tight">
+					<h1 class="text-3xl font-black text-slate-900 tracking-tight">
 						Hello, <span class="text-blue-600">{profile?.username || user.email.split('@')[0]}</span>!
 					</h1>
 				</div>
-				<p class="text-slate-500 text-lg font-medium">Ready to continue your learning journey today?</p>
+				<p class="text-slate-500 font-medium">Ready to continue your learning journey today?</p>
 			</div>
 			
 			<div class="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl">
@@ -164,7 +164,7 @@
 				</div>
 			</div>
 
-			<!-- Recommendations / Side Widget -->
+			<!-- Recommendations -->
 			<div class="lg:col-span-4 space-y-8" in:fly={{ y: 20, delay: 300 }}>
 				<div class="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl">
 					<div class="absolute -right-10 -top-10 h-40 w-40 bg-blue-600 blur-[80px] opacity-40"></div>
@@ -199,5 +199,5 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	{/if}
 </div>
