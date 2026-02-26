@@ -12,7 +12,11 @@
 		Paperclip,
 		Menu,
 		Sparkles,
-		Zap
+		Zap,
+		ChevronRight,
+		Globe,
+		Lightbulb,
+		BrainCircuit
 	} from 'lucide-svelte';
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
@@ -36,7 +40,7 @@
 	]);
 
 	let scrollContainer: HTMLDivElement;
-	let sidebarOpen = $state(false);
+	let sidebarOpen = $state(true);
 
 	async function scrollToBottom() {
 		await tick();
@@ -106,187 +110,188 @@
 	});
 </script>
 
-<div class="h-[calc(100vh-64px)] w-full flex bg-slate-50 font-sans text-slate-900 overflow-hidden selection:bg-blue-100">
-	<!-- Enhanced Sidebar -->
+<div class="h-[calc(100vh-64px)] w-full flex bg-slate-50 font-sans text-slate-900 overflow-hidden">
+	<!-- Sidebar -->
 	<aside 
 		class={cn(
-			"h-full bg-white border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col shrink-0 shadow-sm",
-			sidebarOpen ? "w-80" : "w-0 overflow-hidden border-none"
+			"h-full bg-slate-950 text-slate-400 transition-all duration-300 ease-in-out flex flex-col shrink-0 z-20",
+			sidebarOpen ? "w-80" : "w-0 overflow-hidden"
 		)}
 	>
 		<div class="w-80 h-full flex flex-col">
 			<div class="p-6">
+				<div class="flex items-center gap-3 mb-8 px-2">
+					<div class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+						<BrainCircuit size={18} strokeWidth={2.5} />
+					</div>
+					<span class="text-xs font-black text-white uppercase tracking-widest">TailBot AI Hub</span>
+				</div>
+
 				<button 
 					onclick={clearChat}
-					class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-slate-900 text-white rounded-2xl hover:bg-black transition-all font-black text-sm shadow-xl shadow-slate-200"
+					class="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold text-sm shadow-lg shadow-blue-500/20"
 				>
-					<Plus size={18} />
-					<span>New Session</span>
+					<Plus size={16} />
+					<span>New chat</span>
 				</button>
 			</div>
 
-			<div class="flex-1 overflow-y-auto px-6 py-2 space-y-8">
+			<div class="flex-1 overflow-y-auto px-4 space-y-8">
 				<section>
-					<h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-2">History</h3>
-					<div class="space-y-2">
+					<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 px-4">Recent Sessions</h3>
+					<div class="space-y-1">
 						{#each chatHistory as history}
-							<button class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 transition-all text-left group border border-transparent hover:border-slate-100">
-								<MessageSquare size={16} class="text-slate-400 group-hover:text-blue-600" />
-								<span class="text-sm font-bold truncate flex-1 text-slate-600 group-hover:text-slate-900">{history.title}</span>
+							<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-all text-left group">
+								<MessageSquare size={14} class="text-slate-600 group-hover:text-blue-500" />
+								<span class="text-sm font-medium truncate flex-1 group-hover:text-white">{history.title}</span>
 							</button>
 						{/each}
 					</div>
 				</section>
-
+				
 				<section>
-					<h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-2">Focus Areas</h3>
-					<div class="flex flex-wrap gap-2 px-2">
-						{#each ['Mathematics', 'UI Design', 'Physics', 'Python'] as tag}
-							<button class="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-black uppercase text-slate-500 hover:border-blue-600 hover:text-blue-600 transition-all">
-								{tag}
-							</button>
-						{/each}
+					<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 px-4">Insights</h3>
+					<div class="grid grid-cols-2 gap-2 px-4">
+						<div class="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
+							<Globe size={14} class="text-blue-500" />
+							<span class="text-[10px] font-bold text-white leading-none">Global Learning</span>
+						</div>
+						<div class="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2">
+							<Lightbulb size={14} class="text-amber-500" />
+							<span class="text-[10px] font-bold text-white leading-none">Smart Hints</span>
+						</div>
 					</div>
 				</section>
 			</div>
 
-			<div class="p-6 border-t border-slate-100">
-				<button class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-50 transition-all text-sm font-black text-slate-500">
-					<Settings size={18} />
-					<span>Settings</span>
+			<div class="p-6 mt-auto">
+				<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 transition-all text-sm font-bold text-slate-400">
+					<div class="flex items-center gap-3">
+						<Settings size={18} />
+						<span>Preferences</span>
+					</div>
+					<ChevronRight size={14} />
 				</button>
 			</div>
 		</div>
 	</aside>
 
 	<!-- Main Stage -->
-	<main class="flex-1 flex flex-col h-full bg-slate-50 relative">
-		<!-- Signature Header -->
-		<header class="h-16 flex items-center justify-between px-6 border-b border-slate-200 bg-white sticky top-0 z-10">
-			<div class="flex items-center gap-5">
+	<main class="flex-1 flex flex-col h-full bg-white relative">
+		<!-- Header -->
+		<header class="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+			<div class="flex items-center gap-4">
 				<button 
 					onclick={() => sidebarOpen = !sidebarOpen}
-					class="p-2.5 hover:bg-slate-50 rounded-xl transition-all text-slate-500 shadow-sm border border-slate-100"
+					class="p-2.5 hover:bg-slate-50 rounded-lg transition-all text-slate-400"
 				>
 					<Menu size={20} />
 				</button>
-				<div class="flex items-center gap-4">
-					<div class="h-10 w-10 flex items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/20">
-						<Bot size={20} strokeWidth={2.5} />
-					</div>
-					<div>
-						<h1 class="text-sm font-black tracking-tight leading-none mb-1">Programming Tails Bot</h1>
-						<div class="flex items-center gap-2">
-							<span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-							<span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Active Hub v2.0</span>
-						</div>
-					</div>
+				<div class="flex items-center gap-3">
+					<h1 class="text-sm font-black tracking-tight flex items-center gap-2">
+						Programming Tails Bot
+					</h1>
+					<div class="h-4 w-[1px] bg-slate-200"></div>
+					<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-widest">
+						<span class="h-1 w-1 rounded-full bg-blue-600"></span>
+						Neural Engine v2
+					</span>
 				</div>
 			</div>
 			
-			<div class="hidden sm:flex items-center gap-4">
-				<div class="flex h-10 px-4 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm">
-					<Zap size={14} class="text-amber-500" fill="currentColor" />
-					LongCat Thinking
-				</div>
-				<div class="h-10 px-4 flex items-center gap-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200">
-					<Sparkles size={14} />
-					Premium
+			<div class="flex items-center gap-4">
+				<div class="hidden sm:flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+					<Zap size={14} class="text-amber-500" />
+					LongCat Reasoning
 				</div>
 			</div>
 		</header>
 
-		<!-- Message Flow with Theme Background -->
-		<div class="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(59,130,246,0.03)_0%,transparent_100%)] pointer-events-none"></div>
-		
+		<!-- Message Container -->
 		<div 
 			bind:this={scrollContainer}
-			class="flex-1 overflow-y-auto pt-10 pb-48 scroll-smooth"
+			class="flex-1 overflow-y-auto pt-10 pb-48 scroll-smooth bg-slate-50/30"
 		>
-			<div class="max-w-4xl mx-auto w-full px-6 md:px-12 space-y-12">
+			<div class="max-w-4xl mx-auto w-full px-6 md:px-8 space-y-10">
 				{#each messages as message}
 					<div 
-						class="flex gap-8 group"
-						in:fade={{ duration: 250 }}
+						class="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
 					>
-						<div class={cn(
-							"h-12 w-12 rounded-[20px] flex items-center justify-center shrink-0 shadow-xl border-2 select-none transition-transform group-hover:scale-105",
-							message.role === 'assistant' 
-								? "bg-slate-900 border-slate-800 text-white" 
-								: "bg-white border-white text-slate-400"
-						)}>
-							{#if message.role === 'assistant'}
-								<Bot size={24} strokeWidth={2.5} />
-							{:else}
-								<User size={24} strokeWidth={2.5} />
-							{/if}
-						</div>
-
-						<div class="flex-1 min-w-0">
-							<div class="flex items-center justify-between mb-2">
-								<span class="text-[11px] font-black uppercase tracking-widest {message.role === 'assistant' ? 'text-blue-600' : 'text-slate-400'}">
+						<div class="flex items-center gap-3 px-2">
+							<div class={cn(
+								"h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border shadow-sm",
+								message.role === 'assistant' 
+									? "bg-blue-600 border-blue-500 text-white" 
+									: "bg-white border-slate-200 text-slate-400"
+							)}>
+								{#if message.role === 'assistant'}
+									<Bot size={18} strokeWidth={2.5} />
+								{:else}
+									<User size={18} strokeWidth={2.5} />
+								{/if}
+							</div>
+							<div class="flex flex-col">
+								<span class="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">
 									{message.role === 'assistant' ? 'TailBot — AI' : 'Student'}
 								</span>
-								<span class="text-[10px] font-bold text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
+								<span class="text-[9px] font-bold text-slate-300">
 									{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 								</span>
 							</div>
+						</div>
 
-							<div class={cn(
-								"p-8 rounded-[32px] border transition-all leading-relaxed",
-								message.role === 'assistant' 
-									? "bg-white border-slate-100 shadow-sm text-slate-800" 
-									: "bg-blue-600/5 border-blue-100 shadow-sm text-slate-900"
-							)}>
-								<div class="markdown-container text-[16px] font-medium selection:bg-blue-200 antialiased">
-									{#if message.role === 'assistant'}
-										{@html marked(message.content)}
-									{:else}
-										<p class="whitespace-pre-wrap">{message.content}</p>
-									{/if}
-								</div>
+						<div class={cn(
+							"rounded-[24px] p-6 md:p-8 border leading-relaxed",
+							message.role === 'assistant' 
+								? "bg-white border-slate-100 shadow-sm text-slate-800" 
+								: "bg-blue-600 text-white border-blue-500 shadow-xl shadow-blue-500/10"
+						)}>
+							<div class="markdown-container text-[16px] font-medium selection:bg-blue-200 antialiased">
+								{#if message.role === 'assistant'}
+									{@html marked(message.content)}
+								{:else}
+									<p class="whitespace-pre-wrap">{message.content}</p>
+								{/if}
 							</div>
 						</div>
 					</div>
 				{/each}
 
 				{#if isLoading}
-					<div class="flex gap-8 animate-pulse px-6 md:px-12">
-						<div class="h-12 w-12 rounded-[20px] bg-slate-200 shrink-0"></div>
-						<div class="flex-1 space-y-6 pt-2">
-							<div class="h-3 w-32 bg-slate-200 rounded-full"></div>
-							<div class="p-8 rounded-[32px] bg-white border border-slate-100 space-y-3">
-								<div class="h-3 w-full bg-slate-50 rounded-full"></div>
-								<div class="h-3 w-4/5 bg-slate-50 rounded-full"></div>
-								<div class="h-3 w-2/3 bg-slate-50 rounded-full"></div>
+					<div class="flex flex-col gap-4 animate-pulse">
+						<div class="flex items-center gap-3 px-2">
+							<div class="h-8 w-8 rounded-lg bg-blue-600 text-white flex items-center justify-center opacity-50">
+								<Bot size={18} />
 							</div>
+							<div class="h-2 w-24 bg-slate-200 rounded-full"></div>
 						</div>
+						<div class="h-32 rounded-[24px] bg-white border border-slate-100 shadow-sm"></div>
 					</div>
 				{/if}
 			</div>
 		</div>
 
-		<!-- Clean Integration Input -->
-		<div class="absolute bottom-0 inset-x-0 p-8 md:p-12 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent pointer-events-none">
-			<div class="max-w-4xl mx-auto w-full pointer-events-auto">
-				<div class="relative bg-white border-2 border-slate-200 rounded-[24px] shadow-2xl shadow-slate-200 transition-all overflow-hidden focus-within:border-blue-600 focus-within:ring-8 focus-within:ring-blue-600/5 group">
+		<!-- Command Center Input -->
+		<div class="absolute bottom-0 inset-x-0 p-6 md:p-10 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent pointer-events-none">
+			<div class="max-w-3xl mx-auto w-full pointer-events-auto">
+				<div class="relative bg-white border border-slate-200 rounded-[28px] shadow-2xl transition-all overflow-hidden focus-within:border-blue-600 focus-within:ring-8 focus-within:ring-blue-600/5 group">
 					<textarea 
 						bind:value={inputMessage}
 						onkeydown={handleKeydown}
-						placeholder="What are we learning today?"
+						placeholder="What are we focusing on today?"
 						class="w-full bg-transparent px-8 py-6 text-basis font-bold text-slate-900 outline-none resize-none min-h-[72px] h-[72px] placeholder:text-slate-300"
 					></textarea>
 					
-					<div class="flex items-center justify-between px-6 pb-6 pt-2">
-						<div class="flex items-center gap-2">
-							<button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-[10px] font-black uppercase text-slate-500 transition-all border border-slate-100 shadow-sm">
+					<div class="flex items-center justify-between px-6 pb-6 mt-1">
+						<div class="flex items-center gap-1.5">
+							<button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-[10px] font-black uppercase text-slate-500 hover:bg-slate-100 transition-all border border-slate-100">
 								<Paperclip size={14} class="text-blue-600" />
-								Attach Resource
+								<span>Summarize</span>
 							</button>
 							<button 
 								onclick={clearChat}
-								class="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-								title="Reset Session"
+								class="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+								title="Reset"
 							>
 								<Trash2 size={20} />
 							</button>
@@ -295,15 +300,15 @@
 						<button 
 							onclick={sendMessage}
 							disabled={!inputMessage.trim() || isLoading}
-							class="flex items-center gap-3 px-10 py-4 bg-slate-900 text-white text-sm font-black rounded-2xl hover:bg-black disabled:opacity-30 disabled:hover:scale-100 transition-all shadow-xl shadow-slate-200 transform hover:scale-105 active:scale-95"
+							class="flex items-center gap-3 px-10 py-3 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-black disabled:opacity-20 disabled:hover:scale-100 transition-all shadow-xl transform active:scale-95"
 						>
-							<span>Send Command</span>
-							<Send size={18} strokeWidth={3} />
+							<span>Send command</span>
+							<Send size={16} strokeWidth={3} />
 						</button>
 					</div>
 				</div>
-				<p class="text-center mt-6 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-					Programming Tails • Neural Intelligence Interface • 2026
+				<p class="text-center mt-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+					Neural Hub • Secure Learning Environment
 				</p>
 			</div>
 		</div>
@@ -318,74 +323,63 @@
 	.markdown-container :global(h1),
 	.markdown-container :global(h2),
 	.markdown-container :global(h3) {
-		font-weight: 900;
-		color: #0f172a;
-		margin-top: 32px;
-		margin-bottom: 16px;
-		letter-spacing: -0.025em;
+		font-weight: 800;
+		color: #000;
+		margin-top: 24px;
+		margin-bottom: 12px;
 	}
-	.markdown-container :global(h1) { font-size: 1.8rem; }
-	.markdown-container :global(h2) { font-size: 1.4rem; }
-	.markdown-container :global(h3) { font-size: 1.2rem; }
+	.markdown-container :global(h1) { font-size: 1.6rem; }
+	.markdown-container :global(h2) { font-size: 1.3rem; }
+	.markdown-container :global(h3) { font-size: 1.1rem; }
 	
-	.markdown-container :global(p) { margin-bottom: 20px; }
+	.markdown-container :global(p) { margin-bottom: 16px; }
 	
 	.markdown-container :global(code) {
-		background: #f1f5f9;
-		padding: 3px 6px;
-		border-radius: 6px;
+		background: #f1f3f4;
+		padding: 2px 4px;
+		border-radius: 4px;
 		font-size: 0.9em;
 		font-weight: 800;
-		color: #2563eb;
 	}
 	
 	.markdown-container :global(pre) {
-		background: #0f172a !important;
-		color: #f8fafc !important;
-		padding: 28px !important;
+		background: #000 !important;
+		color: #fff !important;
+		padding: 24px !important;
 		border-radius: 20px !important;
-		margin: 24px 0 !important;
-		border: 1px solid #1e293b !important;
+		margin: 20px 0 !important;
+		border: 1px solid #333 !important;
 		overflow-x: auto;
-		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 	}
 
 	.markdown-container :global(pre code) {
 		background: transparent !important;
 		padding: 0 !important;
 		color: inherit !important;
-		font-weight: 500;
+		font-weight: 400;
 	}
 
 	.markdown-container :global(ul) {
 		list-style-type: disc;
-		padding-left: 28px;
-		margin-bottom: 20px;
+		padding-left: 24px;
+		margin-bottom: 16px;
 	}
 
 	.markdown-container :global(li) {
-		margin-bottom: 10px;
-		font-weight: 600;
+		margin-bottom: 8px;
 	}
 
-	.markdown-container :global(strong) {
-		font-weight: 900;
-		color: #1e293b;
-	}
-
-	/* Beautiful Scrollbar */
 	::-webkit-scrollbar {
-		width: 10px;
+		width: 6px;
 	}
 	::-webkit-scrollbar-track {
-		background: #f1f5f9;
+		background: transparent;
 	}
 	::-webkit-scrollbar-thumb {
-		background: #cbd5e1;
-		border-radius: 20px;
-		border: 3px solid #f1f5f9;
+		background: #e2e8f0;
+		border-radius: 10px;
 	}
 	::-webkit-scrollbar-thumb:hover {
-		background: #94a3b8;
+		background: #cbd5e1;
 	}
 </style>
