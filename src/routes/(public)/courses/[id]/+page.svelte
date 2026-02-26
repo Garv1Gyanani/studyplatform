@@ -19,6 +19,9 @@
 	import { cn } from '$lib/utils';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { openLogin } from '$lib/stores/auth';
+	import { getAIChatCompletion } from '$lib/ai_service';
+	import AIAssistant from '$lib/components/AIAssistant.svelte';
+	import { Sparkles, Wand2, Lightbulb } from 'lucide-svelte';
 
 	let id = page.params.id;
 	let video = $state<any>(null);
@@ -133,6 +136,23 @@
 		} finally {
 			completing = false;
 		}
+	}
+
+	async function getAISummary() {
+		if (!video) return;
+		// This will be handled by the AIAssistant component via a custom event or shared state if I had one, 
+		// but for now I will just call the service and show a simple modal or alert, 
+		// OR better: I'll make the AIAssistant respond to custom events.
+		const prompt = `Can you provide a concise summary and key takeaways for the course titled "${video.title}"? Here is the description: ${video.description}`;
+		// For now, I'll just open the assistant with a pre-filled prompt (if I add that capability) 
+		// or just call it directly. Let's redirect the user's intent to the assistant.
+		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+	}
+
+	async function getAIExplanation() {
+		if (!video) return;
+		const prompt = `Can you explain the core concepts of "${video.title}" in simple terms for a beginner?`;
+		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
 	}
 </script>
 
@@ -252,6 +272,34 @@
 						<p class="text-slate-500 font-medium text-lg leading-relaxed whitespace-pre-wrap">
 							{video.description}
 						</p>
+
+						<!-- AI Actions -->
+						<div class="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<button 
+								onclick={getAISummary}
+								class="flex items-center justify-center gap-3 p-6 rounded-3xl bg-blue-50 border border-blue-100 text-blue-700 hover:bg-blue-100 transition-all font-bold group"
+							>
+								<div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm transition-transform group-hover:scale-110">
+									<Sparkles size={20} />
+								</div>
+								<div class="text-left">
+									<p class="text-sm font-black">AI Summarize</p>
+									<p class="text-[10px] opacity-70">Get key takeaways instantly</p>
+								</div>
+							</button>
+							<button 
+								onclick={getAIExplanation}
+								class="flex items-center justify-center gap-3 p-6 rounded-3xl bg-amber-50 border border-amber-100 text-amber-700 hover:bg-amber-100 transition-all font-bold group"
+							>
+								<div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-amber-600 shadow-sm transition-transform group-hover:scale-110">
+									<Lightbulb size={20} />
+								</div>
+								<div class="text-left">
+									<p class="text-sm font-black">AI Explain</p>
+									<p class="text-[10px] opacity-70">Concept breakdown</p>
+								</div>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>

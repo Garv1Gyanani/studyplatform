@@ -2,6 +2,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import AuthModal from '$lib/components/AuthModal.svelte';
+	import AIAssistant from '$lib/components/AIAssistant.svelte';
 	import { isAuthModalOpen, authModalMode } from '$lib/stores/auth';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
@@ -28,5 +29,6 @@
 </svelte:head>
 
 <AuthModal bind:isOpen={$isAuthModalOpen} />
+<AIAssistant />
 
 {@render children()}

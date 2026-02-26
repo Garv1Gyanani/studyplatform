@@ -13,7 +13,9 @@
 		CheckCircle2, 
 		AlertCircle,
 		PlayCircle,
-		ArrowRight
+		ArrowRight,
+		Lightbulb,
+		Sparkles
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { fade, fly, scale } from 'svelte/transition';
@@ -119,6 +121,12 @@
 
 	function selectOption(questionId: string, text: string) {
 		answers[questionId] = text;
+	}
+
+	function getAIHint() {
+		const q = questions[currentQuestionIndex];
+		const prompt = `I'm taking a quiz on "${quiz.title}". The question is: "${q.question}". The options are: ${q.options.map((o: any) => o.text).join(', ')}. Without giving me the direct answer, can you give me a subtle hint or explain the concept?`;
+		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
 	}
 </script>
 
@@ -230,6 +238,17 @@
 						<h2 class="text-3xl font-extrabold text-slate-900 leading-tight">
 							{questions[currentQuestionIndex].question}
 						</h2>
+
+						<!-- AI Hint Button -->
+						<div class="flex">
+							<button 
+								onclick={getAIHint}
+								class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 text-xs font-black shadow-sm hover:bg-amber-100 transition-all group"
+							>
+								<Lightbulb size={14} class="group-hover:scale-110 transition-transform" />
+								GET AI HINT
+							</button>
+						</div>
 
 						<div class="grid grid-cols-1 gap-4">
 							{#each questions[currentQuestionIndex].options as option}
