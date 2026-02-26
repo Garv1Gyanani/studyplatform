@@ -16,7 +16,8 @@
 		ShieldCheck,
 		FileText,
 		FileQuestion,
-		BookOpen
+		BookOpen,
+		Sparkles
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { onMount } from 'svelte';
@@ -82,6 +83,7 @@
 		{ name: 'Leaderboard', href: '/leaderboard' },
 		{ name: 'Blogs', href: '/blogs' },
 		{ name: 'Games', href: '/games' },
+		{ name: 'AI Hub', href: '/ai-hub' },
 	];
 
 	async function handleLogout() {
@@ -178,6 +180,9 @@
 									{/if}
 									<a href="/dashboard" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
 										<LayoutDashboard size={18} /> Dashboard
+									</a>
+									<a href="/ai-hub" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-indigo-600 bg-indigo-50/50 transition-all hover:bg-indigo-100">
+										<Sparkles size={18} /> AI Study Hub
 									</a>
 									<a href="/bookmarks" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
 										<Zap size={18} /> Your Library
