@@ -3,6 +3,7 @@
 	import { MessageSquare, Send, X, Bot, User, Trash2, Sparkles, Minus } from 'lucide-svelte';
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
+	import { marked } from 'marked';
 
 	let isOpen = $state(false);
 	let isMinimized = $state(false);
@@ -11,7 +12,7 @@
 	let messages = $state<{ role: 'user' | 'assistant'; content: string; timestamp: Date }[]>([
 		{
 			role: 'assistant',
-			content: 'Hello! I am your AI Study Assistant. How can I help you learn today?',
+			content: 'Hello! I am the Programming Tails Bot. How can I help you learn today?',
 			timestamp: new Date()
 		}
 	]);
@@ -120,7 +121,7 @@
 						<Sparkles size={18} class="text-yellow-300" />
 					</div>
 					<div>
-						<h3 class="text-sm font-bold">AI Study Assistant</h3>
+						<h3 class="text-sm font-bold">Programming Tails Bot</h3>
 						<span class="flex items-center gap-1 text-[10px] opacity-80">
 							<span class="h-1.5 w-1.5 rounded-full bg-green-400"></span>
 							Online
@@ -161,7 +162,9 @@
 										{#if message.role === 'assistant'}
 											<Bot size={14} class="mt-1 flex-shrink-0 text-blue-500" />
 										{/if}
-										<p class="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+										<div class="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed">
+											{@html marked(message.content)}
+										</div>
 									</div>
 									<div
 										class="mt-1 text-right text-[10px] {message.role === 'user'

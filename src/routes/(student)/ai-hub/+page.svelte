@@ -22,6 +22,7 @@
 	import { onMount, tick } from 'svelte';
 	import { fly, fade, slide } from 'svelte/transition';
 	import { cn } from '$lib/utils';
+	import { marked } from 'marked';
 
 	let inputMessage = $state('');
 	let isLoading = $state(false);
@@ -246,7 +247,7 @@
 						<div class="text-slate-700 text-basis md:text-lg leading-relaxed font-medium">
 							{#if message.role === 'assistant'}
 								<div class="prose prose-slate max-w-none prose-p:leading-relaxed prose-strong:font-black prose-pre:bg-slate-900 prose-pre:rounded-2xl prose-pre:p-6 prose-pre:border prose-pre:border-white/10">
-									{message.content}
+									{@html marked(message.content)}
 								</div>
 							{:else}
 								{message.content}
