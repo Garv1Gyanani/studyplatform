@@ -21,6 +21,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let videos = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -32,9 +33,19 @@
 	let youtubeUrl = $state('');
 	let categoryId = $state('');
 	let difficulty = $state('beginner');
+	let duration = $state('15m');
 	let isPublished = $state(true);
+	let editingId = $state<string | null>(null);
 
-	onMount(fetchVideos);
+	onMount(async () => {
+		fetchVideos();
+		fetchCategories();
+	});
+
+	async function fetchCategories() {
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	}
 
 	async function fetchVideos() {
 		loading = true;
@@ -47,15 +58,22 @@
 		loading = false;
 	}
 
-	async function handleAddVideo() {
+	async function handleSaveVideo() {
 		formLoading = true;
-		const { error } = await supabase.from('videos').insert({
+		
+		const videoData = {
 			title,
 			description,
 			youtube_url: source === 'youtube' ? youtubeUrl : null,
+			category_id: categoryId || null,
 			difficulty_level: difficulty,
+			duration,
 			is_published: isPublished
-		});
+		};
+
+		const { error } = editingId 
+			? await supabase.from('videos').update(videoData).eq('id', editingId)
+			: await supabase.from('videos').insert(videoData);
 
 		if (!error) {
 			isFormOpen = false;
@@ -67,10 +85,28 @@
 		formLoading = false;
 	}
 
+	function startEdit(video: any) {
+		editingId = video.id;
+		title = video.title;
+		description = video.description || '';
+		categoryId = video.category_id || '';
+		difficulty = video.difficulty_level;
+		duration = video.duration || '15m';
+		isPublished = video.is_published;
+		source = video.youtube_url ? 'youtube' : 'upload';
+		youtubeUrl = video.youtube_url || '';
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		description = '';
 		youtubeUrl = '';
+		categoryId = '';
+		difficulty = 'beginner';
+		duration = '15m';
+		isPublished = true;
 		source = 'youtube';
 	}
 
@@ -97,7 +133,7 @@
 			<p class="mt-1 text-slate-500">Manage your educational video content and courses.</p>
 		</div>
 		<button 
-			onclick={() => isFormOpen = true}
+			onclick={() => { resetForm(); fetchCategories(); isFormOpen = true; }}
 			class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
 		>
 			<Plus size={18} />
@@ -223,7 +259,10 @@
 										<button class="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600">
 											<Eye size={18} />
 										</button>
-										<button class="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600">
+										<button 
+											onclick={() => { startEdit(video); fetchCategories(); }}
+											class="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+										>
 											<Edit2 size={18} />
 										</button>
 										<button 
@@ -261,7 +300,9 @@
 			onclick={e => e.stopPropagation()}
 		>
 			<div class="flex items-center justify-between border-b border-slate-100 px-8 py-6">
-				<h2 class="text-xl font-bold text-slate-900">Add New Video Course</h2>
+				<h2 class="text-xl font-bold text-slate-900">
+					{editingId ? 'Edit Video Course' : 'Add New Video Course'}
+				</h2>
 				<button 
 					onclick={() => isFormOpen = false}
 					class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
@@ -271,16 +312,31 @@
 			</div>
 
 			<div class="max-h-[70vh] overflow-y-auto p-8">
-				<form onsubmit={e => { e.preventDefault(); handleAddVideo(); }} class="space-y-6">
-					<div class="space-y-2">
-						<label for="title" class="text-xs font-bold uppercase tracking-widest text-slate-500">Course Title</label>
-						<input 
-							id="title"
-							bind:value={title}
-							required
-							placeholder="e.g. Mastering Advanced React Patterns"
-							class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none ring-blue-500/10 focus:ring-4 focus:border-blue-500 focus:bg-white"
-						/>
+				<form onsubmit={e => { e.preventDefault(); handleSaveVideo(); }} class="space-y-6">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="space-y-2">
+							<label for="title" class="text-xs font-bold uppercase tracking-widest text-slate-500">Course Title</label>
+							<input 
+								id="title"
+								bind:value={title}
+								required
+								placeholder="e.g. Mastering Advanced React Patterns"
+								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none ring-blue-500/10 focus:ring-4 focus:border-blue-500 focus:bg-white"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="category" class="text-xs font-bold uppercase tracking-widest text-slate-500">Category</label>
+							<select 
+								id="category"
+								bind:value={categoryId}
+								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white cursor-pointer"
+							>
+								<option value="">Select Category</option>
+								{#each categories as cat}
+									<option value={cat.id}>{cat.name}</option>
+								{/each}
+							</select>
+						</div>
 					</div>
 
 					<div class="space-y-2">
@@ -294,7 +350,7 @@
 						></textarea>
 					</div>
 
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 						<div class="space-y-2">
 							<label class="text-xs font-bold uppercase tracking-widest text-slate-500">Video Source</label>
 							<div class="flex rounded-xl bg-slate-100 p-1">
@@ -327,6 +383,15 @@
 								<option value="intermediate">Intermediate</option>
 								<option value="advanced">Advanced</option>
 							</select>
+						</div>
+						<div class="space-y-2">
+							<label for="duration" class="text-xs font-bold uppercase tracking-widest text-slate-500">Duration</label>
+							<input 
+								id="duration"
+								bind:value={duration}
+								placeholder="e.g. 15m, 1h 20m"
+								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none ring-blue-500/10 focus:ring-4 focus:border-blue-500 focus:bg-white"
+							/>
 						</div>
 					</div>
 
@@ -382,7 +447,7 @@
 									<Loader2 size={18} class="animate-spin" />
 									Saving...
 								{:else}
-									Save Video
+									{editingId ? 'Save Changes' : 'Save Video'}
 								{/if}
 							</button>
 						</div>

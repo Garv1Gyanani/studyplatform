@@ -22,6 +22,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let blogs = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -31,15 +32,21 @@
 	let excerpt = $state('');
 	let content = $state('');
 	let slug = $state('');
+	let categoryId = $state('');
 	let isPublished = $state(false);
+	let editingId = $state<string | null>(null);
 
-	onMount(fetchBlogs);
+	onMount(async () => {
+		fetchBlogs();
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	});
 
 	async function fetchBlogs() {
 		loading = true;
 		const { data, error } = await supabase
 			.from('blogs')
-			.select('*, profiles(username)')
+			.select('*, profiles(username), categories(name)')
 			.order('created_at', { ascending: false });
 		
 		if (!error) blogs = data;
@@ -47,22 +54,27 @@
 	}
 
 	function generateSlug() {
-		slug = title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+		slug = title.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 	}
 
 	async function handleSaveBlog() {
 		formLoading = true;
 		const { data: { user } } = await supabase.auth.getUser();
 		
-		const { error } = await supabase.from('blogs').insert({
+		const blogData = {
 			title,
-			slug: slug || title.toLowerCase().replace(/ /g, '-'),
+			slug: slug || title.toLowerCase().trim().replace(/ /g, '-'),
 			excerpt,
 			content,
+			category_id: categoryId || null,
 			is_published: isPublished,
 			author_id: user?.id,
-			published_at: isPublished ? new Date().toISOString() : null
-		});
+			published_at: isPublished ? (isPublished && !editingId ? new Date().toISOString() : null) : null
+		};
+
+		const { error } = editingId 
+			? await supabase.from('blogs').update(blogData).eq('id', editingId)
+			: await supabase.from('blogs').insert(blogData);
 
 		if (!error) {
 			isFormOpen = false;
@@ -74,11 +86,24 @@
 		formLoading = false;
 	}
 
+	function startEdit(blog: any) {
+		editingId = blog.id;
+		title = blog.title;
+		excerpt = blog.excerpt || '';
+		content = blog.content || '';
+		slug = blog.slug;
+		categoryId = blog.category_id || '';
+		isPublished = blog.is_published;
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		excerpt = '';
 		content = '';
 		slug = '';
+		categoryId = '';
 		isPublished = false;
 	}
 
@@ -170,7 +195,14 @@
 										</div>
 										<div>
 											<p class="text-sm font-bold text-slate-900 line-clamp-1">{blog.title}</p>
-											<p class="text-xs text-slate-400 mt-0.5">/{blog.slug}</p>
+											<div class="flex items-center gap-2 mt-0.5">
+												<p class="text-xs text-slate-400">/{blog.slug}</p>
+												{#if blog.categories?.name}
+													<span class="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+														{blog.categories.name}
+													</span>
+												{/if}
+											</div>
 										</div>
 									</div>
 								</td>
@@ -193,7 +225,10 @@
 								</td>
 								<td class="px-6 py-4 text-right">
 									<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<button class="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600">
+										<button 
+											onclick={() => startEdit(blog)}
+											class="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+										>
 											<Edit2 size={18} />
 										</button>
 										<button 
@@ -226,7 +261,9 @@
 			onclick={e => e.stopPropagation()}
 		>
 			<div class="flex items-center justify-between border-b border-slate-100 px-8 py-6">
-				<h2 class="text-xl font-bold text-slate-900">Write New Blog Post</h2>
+				<h2 class="text-xl font-bold text-slate-900">
+					{editingId ? 'Edit Blog Post' : 'Write New Blog Post'}
+				</h2>
 				<button onclick={() => isFormOpen = false} class="rounded-full p-2 text-slate-400 hover:bg-slate-100 transition-colors">
 					<X size={20} />
 				</button>
@@ -255,6 +292,20 @@
 								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white"
 							/>
 						</div>
+					</div>
+
+					<div class="space-y-2">
+						<label for="blog-category" class="text-xs font-bold uppercase tracking-widest text-slate-500">Category</label>
+						<select 
+							id="blog-category"
+							bind:value={categoryId}
+							class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white cursor-pointer"
+						>
+							<option value="">Select Category (Optional)</option>
+							{#each categories as cat}
+								<option value={cat.id}>{cat.name}</option>
+							{/each}
+						</select>
 					</div>
 
 					<div class="space-y-2">
@@ -306,7 +357,7 @@
 									<Loader2 size={18} class="animate-spin" />
 									Saving...
 								{:else}
-									Save Blog Post
+									{editingId ? 'Save Changes' : 'Save Blog Post'}
 								{/if}
 							</button>
 						</div>

@@ -12,11 +12,28 @@
 		Users, 
 		ShieldCheck,
 		Gamepad2,
-		Star
+		Star,
+		Clock,
+		PlayCircle
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { openSignup } from '$lib/stores/auth';
 	import { fade, fly } from 'svelte/transition';
+	import { supabase } from '$lib/supabase';
+	import { onMount } from 'svelte';
+
+	let popularCourses = $state<any[]>([]);
+
+	onMount(async () => {
+		const { data } = await supabase
+			.from('videos')
+			.select('*, categories(name)')
+			.eq('is_published', true)
+			.order('created_at', { ascending: false })
+			.limit(3);
+		
+		popularCourses = data || [];
+	});
 </script>
 
 <!-- Hero Section -->
@@ -42,7 +59,7 @@
 				</h1>
 
 				<p class="text-xl leading-relaxed text-slate-500 sm:max-w-2xl font-medium">
-					EduPlatform combines high-quality video courses with interactive gamification. Earn XP, compete in global leaderboards, and turn your learning journey into an adventure.
+					Programming Tails combines high-quality video courses with interactive gamification. Earn XP, compete in global leaderboards, and turn your learning journey into an adventure.
 				</p>
 
 				<div class="flex flex-wrap gap-6">
@@ -178,6 +195,67 @@
 		</div>
 	</div>
 </section>
+
+<!-- Popular Courses Section -->
+{#if popularCourses.length > 0}
+	<section class="py-24 bg-white">
+		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+			<div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+				<div class="space-y-4">
+					<h2 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-none">
+						Popular <span class="text-blue-600">Classes</span>
+					</h2>
+					<p class="text-lg text-slate-500 font-medium max-w-xl">
+						Discover what other students are learning right now. Level up your skills with our most popular video courses.
+					</p>
+				</div>
+				<a href="/courses" class="inline-flex items-center gap-2 px-8 py-4 bg-slate-50 rounded-2xl text-sm font-black text-slate-900 hover:bg-slate-100 transition-all group">
+					View All Courses <ArrowRight size={18} class="transition-transform group-hover:translate-x-1" />
+				</a>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+				{#each popularCourses as video}
+					<a 
+						href={`/courses/${video.id}`}
+						class="group relative bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl hover:translate-y-[-4px] transition-all"
+					>
+						<div class="relative aspect-video overflow-hidden bg-slate-100">
+							{#if video.thumbnail_url}
+								<img src={video.thumbnail_url} alt="" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+							{:else}
+								<div class="h-full w-full flex items-center justify-center text-slate-200">
+									<PlayCircle size={64} />
+								</div>
+							{/if}
+							<div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+						</div>
+
+						<div class="p-8 space-y-4">
+							<div class="flex items-center justify-between">
+								<span class="px-3 py-1 bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-600 rounded-lg">
+									{video.categories?.name || 'General'}
+								</span>
+								<div class="flex items-center gap-1.5 text-amber-500 font-bold text-xs">
+									<Star size={14} fill="currentColor" /> 4.9
+								</div>
+							</div>
+							<h3 class="text-xl font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-1">
+								{video.title}
+							</h3>
+							<div class="flex items-center justify-between pt-4 border-t border-slate-50">
+								<div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+									<Clock size={14} /> {video.duration || '15m'}
+								</div>
+								<span class="text-xs font-black uppercase tracking-widest text-slate-900 group-hover:text-blue-600 transition-colors">Start &rarr;</span>
+							</div>
+						</div>
+					</a>
+				{/each}
+			</div>
+		</div>
+	</section>
+{/if}
 
 <!-- Final CTA -->
 <section class="py-24 relative">

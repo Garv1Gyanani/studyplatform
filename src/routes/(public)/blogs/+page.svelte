@@ -110,7 +110,7 @@
 										<div class="h-full w-full flex items-center justify-center text-slate-400"><UserIcon size={18} /></div>
 									{/if}
 								</div>
-								<span class="text-sm font-bold text-slate-900">{filteredBlogs[0].profiles?.username || 'EduPlatform Team'}</span>
+								<span class="text-sm font-bold text-slate-900">{filteredBlogs[0].profiles?.username || 'Code Shiksha Team'}</span>
 							</div>
 							<div class="flex items-center gap-1.5 text-basis font-black text-blue-600">
 								Read Full Story <ArrowRight size={20} class="transition-transform group-hover:translate-x-2" />

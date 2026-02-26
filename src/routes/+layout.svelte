@@ -10,16 +10,21 @@
 
 	onMount(() => {
 		const authParam = page.url.searchParams.get('auth');
-		if (authParam === 'login' || authParam === 'signup') {
+		if ((authParam === 'login' || authParam === 'signup') && !page.data.session) {
 			$authModalMode = authParam;
 			$isAuthModalOpen = true;
+			
+			// Clear the parameter from the URL without reloading
+			const url = new URL(window.location.href);
+			url.searchParams.delete('auth');
+			window.history.replaceState({}, '', url);
 		}
 	});
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>EduPlatform - Learn Smarter, Faster</title>
+	<title>Programming Tails - Learn Smarter, Faster</title>
 </svelte:head>
 
 <AuthModal bind:isOpen={$isAuthModalOpen} />

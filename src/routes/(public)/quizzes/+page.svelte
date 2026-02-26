@@ -22,7 +22,7 @@
 	onMount(async () => {
 		const { data, error } = await supabase
 			.from('quizzes')
-			.select('*')
+			.select('*, categories(name)')
 			.eq('is_published', true)
 			.order('created_at', { ascending: false });
 		
@@ -93,6 +93,9 @@
 					</div>
 
 					<div class="flex-grow space-y-4">
+						{#if quiz.categories?.name}
+							<span class="inline-flex px-3 py-1 bg-indigo-50 text-[10px] font-black uppercase tracking-widest text-indigo-600 rounded-lg">{quiz.categories.name}</span>
+						{/if}
 						<h3 class="text-2xl font-black text-slate-900 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
 							{quiz.title}
 						</h3>

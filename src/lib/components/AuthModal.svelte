@@ -5,6 +5,7 @@
 	import { fade, fly, scale } from 'svelte/transition';
 
 	import { isAuthModalOpen, authModalMode } from '$lib/stores/auth';
+	import { invalidateAll } from '$app/navigation';
 
 	let { isOpen = $bindable(false), onClose = () => {} } = $props();
 
@@ -76,6 +77,23 @@
 					password
 				});
 				if (loginError) throw loginError;
+				
+				// Fetch profile to check role for redirection
+				const { data: { user } } = await supabase.auth.getUser();
+				if (user) {
+					const { data: profile } = await supabase
+						.from('profiles')
+						.select('role')
+						.eq('id', user.id)
+						.single();
+					
+					if (profile?.role === 'admin') {
+						window.location.href = '/admin';
+						return;
+					}
+				}
+				
+				await invalidateAll();
 				close();
 			}
 		} catch (e: any) {
@@ -159,7 +177,7 @@
 				</h2>
 				<p class="mt-2 text-blue-100">
 					{#if mode === 'login'}
-						Continue your journey with EduPlatform
+						Continue your journey with Code Shiksha
 					{:else if mode === 'signup'}
 						Create an account to access premium content
 					{:else}
@@ -237,7 +255,7 @@
 							<div class="flex items-center justify-between ml-1">
 								<label for="password" class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
 								{#if mode === 'login'}
-									<button type="button" class="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">Forgot?</button>
+									<a href="/auth/forgot" onclick={close} class="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">Forgot?</a>
 								{/if}
 							</div>
 							<div class="relative group">

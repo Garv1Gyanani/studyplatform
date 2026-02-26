@@ -10,7 +10,9 @@
 		Loader2,
 		Search,
 		ChevronRight,
-		Filter
+		Filter,
+		Gamepad2,
+		Layout
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { fade, fly } from 'svelte/transition';
@@ -24,21 +26,38 @@
 		const user = sessionData.session?.user;
 
 		if (user) {
-			const { data, error } = await supabase
+			const { data: bookmarkEntries, error } = await supabase
 				.from('bookmarks')
 				.select('*')
 				.eq('user_id', user.id)
 				.order('created_at', { ascending: false });
 			
-			if (!error) {
-				// In a real app, you'd join with content tables. 
-				// For this demo, we'll simulate some detailed bookmarks data.
-				bookmarks = data.map(b => ({
-					...b,
-					title: b.content_id.split('-')[0] + ' Concept Review', // Simulated title
-					type: b.content_type === 'video' ? 'Video Class' : 'Study Note',
-					category: 'Computer Science'
-				}));
+			if (!error && bookmarkEntries) {
+				// Fetch details for each bookmark
+				const detailedBookmarks = await Promise.all(
+					bookmarkEntries.map(async (b) => {
+						let detail = null;
+						if (b.content_type === 'video') {
+							const { data } = await supabase.from('videos').select('title, difficulty_level').eq('id', b.content_id).single();
+							detail = data;
+						} else if (b.content_type === 'note') {
+							const { data } = await supabase.from('notes').select('title').eq('id', b.content_id).single();
+							detail = data;
+						} else if (b.content_type === 'book') {
+							const { data } = await supabase.from('books').select('title, author').eq('id', b.content_id).single();
+							detail = data;
+						}
+
+						return {
+							...b,
+							title: detail?.title || 'Unknown Content',
+							subtitle: detail?.author || detail?.difficulty_level || '',
+							typeLabel: b.content_type.charAt(0).toUpperCase() + b.content_type.slice(1),
+							url: b.content_type === 'video' ? `/courses/${b.content_id}` : `/${b.content_type}s`
+						};
+					})
+				);
+				bookmarks = detailedBookmarks;
 			}
 		}
 		loading = false;
@@ -50,6 +69,10 @@
 			bookmarks = bookmarks.filter(b => b.id !== id);
 		}
 	}
+
+	let filteredBookmarks = $derived(
+		bookmarks.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()))
+	);
 </script>
 
 <div class="px-4 sm:px-8 py-12 max-w-6xl mx-auto space-y-10">
@@ -78,7 +101,7 @@
 		<div class="flex h-[40vh] items-center justify-center">
 			<Loader2 size={48} class="animate-spin text-blue-600" />
 		</div>
-	{:else if bookmarks.length === 0}
+	{:else if filteredBookmarks.length === 0}
 		<div class="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-20 text-center space-y-6">
 			<div class="inline-flex h-24 w-24 items-center justify-center rounded-[32px] bg-slate-50 text-slate-300">
 				<Bookmark size={48} fill="currentColor" />
@@ -93,33 +116,39 @@
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			{#each bookmarks as bookmark}
+			{#each filteredBookmarks as bookmark}
 				<div 
 					class="group relative bg-white rounded-[32px] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 hover:translate-y-[-4px] transition-all"
 					in:fade
 				>
 					<button 
 						onclick={() => removeBookmark(bookmark.id)}
-						class="absolute right-6 top-6 h-10 w-10 rounded-full bg-red-50 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+						class="absolute right-6 top-6 h-10 w-10 rounded-full bg-red-50 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center z-10"
 					>
 						<Trash2 size={18} />
 					</button>
 
 					<div class="flex items-center gap-4 mb-6">
 						<div class={cn("h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner", 
-							bookmark.content_type === 'video' ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+							bookmark.content_type === 'video' ? "bg-blue-50 text-blue-600" : 
+							bookmark.content_type === 'book' ? "bg-green-50 text-green-600" :
+							"bg-purple-50 text-purple-600"
 						)}>
 							{#if bookmark.content_type === 'video'}
 								<Video size={24} />
+							{:else if bookmark.content_type === 'book'}
+								<BookOpen size={24} />
 							{:else}
 								<FileText size={24} />
 							{/if}
 						</div>
 						<div>
-							<span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{bookmark.type}</span>
-							<p class="text-[12px] font-bold text-slate-900 flex items-center gap-1">
-								<BookOpen size={12} class="text-blue-500" /> {bookmark.category}
-							</p>
+							<span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{bookmark.typeLabel}</span>
+							{#if bookmark.subtitle}
+								<p class="text-[12px] font-bold text-slate-900 flex items-center gap-1">
+									<Layout size={12} class="text-blue-500" /> {bookmark.subtitle}
+								</p>
+							{/if}
 						</div>
 					</div>
 
@@ -127,9 +156,9 @@
 					
 					<div class="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
 						<span class="text-xs font-bold text-slate-400">Added {new Date(bookmark.created_at).toLocaleDateString()}</span>
-						<button class="flex items-center gap-1.5 text-sm font-black text-blue-600 group-hover:underline">
+						<a href={bookmark.url} class="flex items-center gap-1.5 text-sm font-black text-blue-600 group-hover:underline">
 							View Now <ChevronRight size={18} />
-						</button>
+						</a>
 					</div>
 				</div>
 			{/each}

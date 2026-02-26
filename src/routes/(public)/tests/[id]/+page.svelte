@@ -12,7 +12,8 @@
 		Lock,
 		CheckCircle2,
 		XCircle,
-		ArrowRight
+		ArrowRight,
+		GraduationCap
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { fade, fly, scale } from 'svelte/transition';

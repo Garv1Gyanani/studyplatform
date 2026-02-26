@@ -23,7 +23,7 @@
 	onMount(async () => {
 		const { data, error } = await supabase
 			.from('books')
-			.select('*')
+			.select('*, categories(name)')
 			.eq('is_published', true)
 			.order('created_at', { ascending: false });
 		
@@ -112,6 +112,11 @@
 						<div class="absolute -right-2 top-8 px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-l-lg shadow-lg">
 							{book.subject}
 						</div>
+						{#if book.categories?.name}
+							<div class="absolute -right-2 top-20 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-l-lg shadow-lg">
+								{book.categories.name}
+							</div>
+						{/if}
 					</div>
 
 					<div class="space-y-2">
@@ -120,12 +125,20 @@
 					</div>
 
 					<div class="flex items-center gap-3 w-full justify-center">
-						<button class="flex-grow py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-black active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2">
+						<a 
+							href={book.pdf_url || '#'} 
+							target={book.pdf_url ? "_blank" : "_self"}
+							class="flex-grow py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-black active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+						>
 							Read Now <ChevronRight size={18} />
-						</button>
-						<button class="h-12 w-12 rounded-2xl border-2 border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-600 flex items-center justify-center transition-all">
+						</a>
+						<a 
+							href={book.pdf_url || '#'} 
+							target={book.pdf_url ? "_blank" : "_self"}
+							class="h-12 w-12 rounded-2xl border-2 border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-600 flex items-center justify-center transition-all"
+						>
 							<Download size={20} />
-						</button>
+						</a>
 					</div>
 				</div>
 			{/each}

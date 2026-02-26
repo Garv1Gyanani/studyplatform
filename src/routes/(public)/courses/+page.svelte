@@ -141,7 +141,7 @@
 
 						<div class="pt-6 border-t border-slate-50 flex items-center justify-between">
 							<div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-								<Clock size={14} /> 1h 24m
+								<Clock size={14} /> {video.duration || '15m'}
 							</div>
 							<div class="flex items-center gap-1 text-sm font-black text-slate-900">
 								Start Learning <ArrowRight size={16} class="transition-transform group-hover:translate-x-1" />

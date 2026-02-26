@@ -8,9 +8,9 @@
 			<div class="col-span-2 lg:col-span-2">
 				<a href="/" class="flex items-center gap-2">
 					<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
-						<span class="text-xl font-bold">E</span>
+						<span class="text-xl font-bold">P</span>
 					</div>
-					<span class="text-xl font-bold tracking-tight text-slate-900">Edu<span class="text-blue-600">Platform</span></span>
+					<span class="text-xl font-bold tracking-tight text-slate-900">Programming<span class="text-blue-600">Tails</span></span>
 				</a>
 				<p class="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
 					The ultimate learning companion for students and admins. Gamified, fast, and feature-rich.
@@ -45,7 +45,7 @@
 		</div>
 		<div class="mt-12 border-t border-slate-100 pt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
 			<p class="text-sm text-slate-500">
-				&copy; {currentYear} EduPlatform. All rights reserved. Built with SvelteKit & Supabase.
+				&copy; {currentYear} Programming Tails. All rights reserved. Built with SvelteKit & Supabase.
 			</p>
 			<div class="flex gap-6">
 				<a href="/privacy" class="text-sm text-slate-400 hover:text-slate-600 transition-colors">Privacy Policy</a>

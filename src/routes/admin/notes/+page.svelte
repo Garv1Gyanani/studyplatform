@@ -18,6 +18,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let notes = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -26,9 +27,17 @@
 	let title = $state('');
 	let content = $state('');
 	let topic = $state('');
+	let categoryId = $state('');
+	let pdfUrl = $state('');
 	let isPublished = $state(true);
+	let editingId = $state<string | null>(null);
+	let uploadStatus = $state('');
 
-	onMount(fetchNotes);
+	onMount(async () => {
+		fetchNotes();
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	});
 
 	async function fetchNotes() {
 		loading = true;
@@ -41,17 +50,46 @@
 		loading = false;
 	}
 
+	async function handleUpload(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		uploadStatus = 'Uploading...';
+		const fileName = `${Date.now()}-${file.name}`;
+		const { data, error } = await supabase.storage
+			.from('resources')
+			.upload(fileName, file);
+
+		if (error) {
+			alert(error.message);
+			uploadStatus = 'Failed';
+		} else {
+			const { data: { publicUrl } } = supabase.storage
+				.from('resources')
+				.getPublicUrl(data.path);
+			pdfUrl = publicUrl;
+			uploadStatus = 'Success!';
+		}
+	}
+
 	async function handleSaveNote() {
 		formLoading = true;
 		const { data: { user } } = await supabase.auth.getUser();
 
-		const { error } = await supabase.from('notes').insert({
+		const noteData = {
 			title,
 			content,
 			topic,
+			category_id: categoryId || null,
+			pdf_url: pdfUrl,
 			is_published: isPublished,
 			author_id: user?.id
-		});
+		};
+
+		const { error } = editingId 
+			? await supabase.from('notes').update(noteData).eq('id', editingId)
+			: await supabase.from('notes').insert(noteData);
 
 		if (!error) {
 			isFormOpen = false;
@@ -63,10 +101,25 @@
 		formLoading = false;
 	}
 
+	function startEdit(note: any) {
+		editingId = note.id;
+		title = note.title;
+		content = note.content;
+		topic = note.topic || '';
+		categoryId = note.category_id || '';
+		pdfUrl = note.pdf_url || '';
+		isPublished = note.is_published;
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		content = '';
 		topic = '';
+		categoryId = '';
+		pdfUrl = '';
+		uploadStatus = '';
 	}
 
 	async function deleteNote(id: string) {
@@ -84,7 +137,7 @@
 			<p class="mt-1 text-slate-500">Curate structured study materials and reference notes.</p>
 		</div>
 		<button 
-			onclick={() => isFormOpen = true}
+			onclick={() => { resetForm(); isFormOpen = true; }}
 			class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
 		>
 			<Plus size={18} />
@@ -117,7 +170,10 @@
 							<button class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-900" onclick={() => deleteNote(note.id)}>
 								<Trash2 size={16} />
 							</button>
-							<button class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+							<button 
+								class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+								onclick={() => startEdit(note)}
+							>
 								<Edit2 size={16} />
 							</button>
 						</div>
@@ -144,10 +200,13 @@
 							<div class={cn("h-2 w-2 rounded-full", note.is_published ? "bg-green-500" : "bg-slate-300")}></div>
 							<span class="text-xs font-bold text-slate-400">{note.is_published ? 'LIVE' : 'DRAFT'}</span>
 						</div>
-						<button class="flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
+						<a 
+							href="/notes/{note.id}"
+							class="flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+						>
 							View Full
 							<ChevronRight size={14} />
-						</button>
+						</a>
 					</div>
 				</div>
 			{/each}
@@ -168,7 +227,9 @@
 			onclick={e => e.stopPropagation()}
 		>
 			<div class="flex items-center justify-between border-b border-slate-100 px-8 py-6">
-				<h2 class="text-xl font-bold text-slate-900">Create Study Note</h2>
+				<h2 class="text-xl font-bold text-slate-900">
+					{editingId ? 'Edit Study Note' : 'Create Study Note'}
+				</h2>
 				<button onclick={() => isFormOpen = false} class="rounded-full p-2 text-slate-400 hover:bg-slate-100 transition-colors">
 					<X size={20} />
 				</button>
@@ -176,8 +237,8 @@
 
 			<div class="p-8">
 				<form onsubmit={e => { e.preventDefault(); handleSaveNote(); }} class="space-y-6">
-					<div class="grid grid-cols-2 gap-4">
-						<div class="space-y-2">
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div class="md:col-span-1 space-y-2">
 							<label for="note-title" class="text-xs font-bold uppercase tracking-widest text-slate-500">Note Title</label>
 							<input 
 								id="note-title"
@@ -187,7 +248,20 @@
 								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white"
 							/>
 						</div>
-						<div class="space-y-2">
+						<div class="md:col-span-1 space-y-2">
+							<label for="note-category" class="text-xs font-bold uppercase tracking-widest text-slate-500">Category</label>
+							<select 
+								id="note-category"
+								bind:value={categoryId}
+								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white cursor-pointer"
+							>
+								<option value="">Select Category</option>
+								{#each categories as cat}
+									<option value={cat.id}>{cat.name}</option>
+								{/each}
+							</select>
+						</div>
+						<div class="md:col-span-1 space-y-2">
 							<label for="note-topic" class="text-xs font-bold uppercase tracking-widest text-slate-500">Topic / Slug</label>
 							<input 
 								id="note-topic"
@@ -203,10 +277,26 @@
 						<textarea 
 							id="note-content"
 							bind:value={content}
-							rows="10"
+							rows="8"
 							placeholder="Write your study notes here using markdown..."
 							class="block w-full rounded-2xl border border-slate-200 bg-slate-50 p-6 text-base outline-none ring-blue-500/10 focus:ring-4 focus:border-blue-500 focus:bg-white shadow-inner"
 						></textarea>
+					</div>
+
+					<div class="space-y-2">
+						<label class="text-xs font-bold uppercase tracking-widest text-slate-500">Attachment (PDF)</label>
+						<div class="flex items-center gap-3">
+							<input 
+								bind:value={pdfUrl}
+								class="flex-grow rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:bg-white"
+								placeholder="PDF URL or upload..."
+							/>
+							<label class="h-11 px-4 bg-slate-900 text-white rounded-xl flex items-center justify-center gap-2 hover:bg-black transition-all cursor-pointer">
+								<UploadCloud size={18} />
+								<span class="text-xs font-bold">{uploadStatus || 'Upload PDF'}</span>
+								<input type="file" accept=".pdf" class="hidden" onchange={handleUpload} />
+							</label>
+						</div>
 					</div>
 
 					<div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
@@ -220,7 +310,7 @@
 								<Loader2 size={18} class="animate-spin" />
 								Saving...
 							{:else}
-								Save Note
+								{editingId ? 'Update Note' : 'Save Note'}
 							{/if}
 						</button>
 					</div>

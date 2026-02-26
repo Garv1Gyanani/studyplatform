@@ -107,9 +107,12 @@
 						<div class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             <Calendar size={12} /> {new Date(note.created_at).toLocaleDateString()}
                         </div>
-						<button class="flex items-center gap-1.5 text-sm font-black text-purple-600 group-hover:translate-x-1 transition-transform">
+						<a 
+							href="/notes/{note.id}"
+							class="flex items-center gap-1.5 text-sm font-black text-purple-600 group-hover:translate-x-1 transition-transform"
+						>
 							Open Note <ChevronRight size={18} />
-						</button>
+						</a>
 					</div>
 				</div>
 			{/each}

@@ -33,6 +33,7 @@
 			label: 'Content',
 			items: [
 				{ name: 'Videos', icon: Video, href: '/admin/videos' },
+				{ name: 'Categories', icon: LayoutDashboard, href: '/admin/categories' },
 				{ name: 'Blogs', icon: BookOpen, href: '/admin/blogs' },
 				{ name: 'Notes', icon: StickyNote, href: '/admin/notes' },
 				{ name: 'Books', icon: Library, href: '/admin/books' },
@@ -118,14 +119,21 @@
 			</div>
 
 			<div class="flex items-center gap-4">
-				<button class="relative rounded-2xl p-3 text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all">
+				<button title="Notifications" class="group relative rounded-2xl p-3 text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all">
 					<Bell size={20} />
 					<span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white"></span>
+					<!-- Tooltip -->
+					<div class="absolute top-14 right-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-y-2 group-hover:translate-y-0 z-50">
+						<p class="text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Recent Alerts</p>
+						<div class="space-y-3">
+							<p class="text-[10px] font-bold text-slate-500 italic">No new notifications. Alerts for system events will appear here.</p>
+						</div>
+					</div>
 				</button>
 				<div class="h-10 w-px bg-slate-100"></div>
-				<button class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200 hover:bg-black transition-all">
+				<a href="/settings" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200 hover:bg-black transition-all">
 					<Settings size={18} />
-				</button>
+				</a>
 			</div>
 		</header>
 

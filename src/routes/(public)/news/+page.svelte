@@ -23,7 +23,7 @@
 	onMount(async () => {
 		const { data, error } = await supabase
 			.from('news')
-			.select('*')
+			.select('*, categories(name)')
 			.eq('is_published', true)
 			.order('published_at', { ascending: false });
 		
@@ -77,7 +77,7 @@
 					<div class="flex-grow space-y-4">
 						<div class="flex items-center gap-4">
 							<span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-blue-100 flex items-center gap-1">
-								<Tag size={12} /> {item.category}
+								<Tag size={12} /> {item.categories?.name || item.category || 'General'}
 							</span>
 							<div class="flex items-center gap-2 text-xs font-bold text-slate-400">
 								<Calendar size={14} /> {new Date(item.published_at).toLocaleDateString()}

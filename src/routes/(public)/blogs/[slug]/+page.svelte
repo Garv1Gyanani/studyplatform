@@ -104,7 +104,7 @@
 							{/if}
 						</div>
 						<div>
-							<p class="text-basis font-black text-slate-900 leading-none">{blog.profiles?.username || 'EduPlatform Team'}</p>
+							<p class="text-basis font-black text-slate-900 leading-none">{blog.profiles?.username || 'Code Shiksha Team'}</p>
 							<p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Senior Educator</p>
 						</div>
 					</div>

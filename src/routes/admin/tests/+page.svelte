@@ -11,16 +11,17 @@
 		Calendar,
 		Clock,
 		Timer,
-		AlertTriangle,
+		CheckCircle2,
 		Save,
         ChevronRight
 	} from 'lucide-svelte';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
-	import { fade, fly } from 'svelte/transition';
+	import { fade, fly, scale } from 'svelte/transition';
 
 	let tests = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -31,18 +32,24 @@
 	let duration = $state(60);
 	let availableFrom = $state('');
 	let availableTo = $state('');
+	let categoryId = $state('');
 	let isPublished = $state(false);
+	let editingId = $state<string | null>(null);
 
 	// Question State
 	let questions = $state<any[]>([]);
 
-	onMount(fetchTests);
+	onMount(async () => {
+		fetchTests();
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	});
 
 	async function fetchTests() {
 		loading = true;
 		const { data, error } = await supabase
 			.from('tests')
-			.select('*')
+			.select('*, categories(name)')
 			.order('created_at', { ascending: false });
 		
 		if (!error) tests = data;
@@ -66,27 +73,38 @@
 	async function handleSaveTest() {
 		formLoading = true;
 		
-		const { data: testData, error: testError } = await supabase
-			.from('tests')
-			.insert({
-				title,
-				instructions,
-				duration_minutes: duration,
-				available_from: availableFrom || null,
-				available_to: availableTo || null,
-				is_published: isPublished
-			})
-			.select()
-			.single();
+		const testData = {
+			title,
+			instructions,
+			duration_minutes: duration,
+			available_from: availableFrom || null,
+			available_to: availableTo || null,
+			category_id: categoryId || null,
+			is_published: isPublished
+		};
 
-		if (testError) {
-			alert(testError.message);
-			formLoading = false;
-			return;
+		let targetTestId = editingId;
+
+		if (editingId) {
+			const { error } = await supabase.from('tests').update(testData).eq('id', editingId);
+			if (error) {
+				alert(error.message);
+				formLoading = false;
+				return;
+			}
+			await supabase.from('test_questions').delete().eq('test_id', editingId);
+		} else {
+			const { data, error } = await supabase.from('tests').insert(testData).select().single();
+			if (error) {
+				alert(error.message);
+				formLoading = false;
+				return;
+			}
+			targetTestId = data.id;
 		}
 
 		const questionsToInsert = questions.map(q => ({
-			test_id: testData.id,
+			test_id: targetTestId,
 			question: q.question,
 			type: q.type,
 			options: q.options,
@@ -103,13 +121,36 @@
 		formLoading = false;
 	}
 
+	async function startEdit(test: any) {
+		editingId = test.id;
+		title = test.title;
+		instructions = test.instructions || '';
+		duration = test.duration_minutes || 60;
+		categoryId = test.category_id || '';
+		availableFrom = test.available_from ? new Date(test.available_from).toISOString().slice(0, 16) : '';
+		availableTo = test.available_to ? new Date(test.available_to).toISOString().slice(0, 16) : '';
+		isPublished = test.is_published;
+		
+		const { data } = await supabase.from('test_questions').select('*').eq('test_id', test.id);
+		questions = data || [];
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		instructions = '';
 		duration = 60;
+		categoryId = '';
 		questions = [];
 		availableFrom = '';
 		availableTo = '';
+	}
+	async function deleteTest(id: string) {
+		if (confirm('Are you sure you want to delete this test? All questions and attempts will be removed.')) {
+			const { error } = await supabase.from('tests').delete().match({ id });
+			if (!error) fetchTests();
+		}
 	}
 </script>
 
@@ -162,7 +203,14 @@
 										<div class="h-10 w-10 flex-shrink-0 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
 											<GraduationCap size={20} />
 										</div>
-										<p class="font-bold text-slate-900">{test.title}</p>
+										<div>
+											<p class="font-bold text-slate-900">{test.title}</p>
+											{#if test.categories?.name}
+												<span class="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+													{test.categories.name}
+												</span>
+											{/if}
+										</div>
 									</div>
 								</td>
 								<td class="px-6 py-4">
@@ -192,8 +240,18 @@
 								</td>
 								<td class="px-6 py-4 text-right">
 									<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
-										<button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+										<button 
+											onclick={() => startEdit(test)}
+											class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+										>
+											<Edit2 size={16} />
+										</button>
+										<button 
+											onclick={() => deleteTest(test.id)}
+											class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+										>
+											<Trash2 size={16} />
+										</button>
 									</div>
 								</td>
 							</tr>
@@ -223,8 +281,12 @@
 						<GraduationCap size={24} />
 					</div>
 					<div>
-						<h2 class="text-2xl font-black text-slate-900 tracking-tight">Formal Test Builder</h2>
-						<p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Designing: {title || 'Untitled Assessment'}</p>
+						<h2 class="text-2xl font-black text-slate-900 tracking-tight">
+							{editingId ? 'Edit Formal Test' : 'Formal Test Builder'}
+						</h2>
+						<p class="text-sm font-bold text-slate-400 uppercase tracking-widest">
+							{editingId ? 'Updating' : 'Designing'}: {title || 'Untitled Assessment'}
+						</p>
 					</div>
 				</div>
 				<button onclick={() => isFormOpen = false} class="h-10 w-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">
@@ -237,11 +299,24 @@
 				<div class="col-span-4 space-y-6">
 					<div class="space-y-4 rounded-3xl bg-slate-50 p-6">
 						<h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
-							<AlertTriangle size={14} /> Core Configuration
+							<CheckCircle2 size={14} /> Core Configuration
 						</h3>
 						<div class="space-y-1">
 							<label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Test Title</label>
 							<input bind:value={title} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none focus:border-blue-600 transition-all" placeholder="Final Geography Exam" />
+						</div>
+						<div class="space-y-1">
+							<label for="test-category" class="text-[10px] font-black uppercase tracking-widest text-slate-500">Category</label>
+							<select 
+								id="test-category"
+								bind:value={categoryId}
+								class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none focus:border-blue-600 transition-all cursor-pointer"
+							>
+								<option value="">Select Category (Optional)</option>
+								{#each categories as cat}
+									<option value={cat.id}>{cat.name}</option>
+								{/each}
+							</select>
 						</div>
 						<div class="grid grid-cols-2 gap-4">
 							<div class="space-y-1">
@@ -282,7 +357,10 @@
 
 					{#each questions as q, qIdx}
 						<div class="p-8 rounded-[32px] border border-slate-100 bg-white shadow-xl shadow-slate-200/20 space-y-6 relative" in:fly={{ y: 20 }}>
-							<button class="absolute -right-3 -top-3 h-10 w-10 rounded-full bg-white border border-slate-100 shadow-lg text-slate-300 hover:text-red-500 flex items-center justify-center transition-all">
+							<button 
+								onclick={() => questions = questions.filter((_, i) => i !== qIdx)}
+								class="absolute -right-3 -top-3 h-10 w-10 rounded-full bg-white border border-slate-100 shadow-lg text-slate-300 hover:text-red-500 flex items-center justify-center transition-all"
+							>
 								<Trash2 size={18} />
 							</button>
 							<div class="flex items-center gap-4">
@@ -300,8 +378,13 @@
 										<input 
 											type="radio" 
 											checked={opt.is_correct} 
-											onchange={() => q.options = q.options.map((o, i) => ({ ...o, is_correct: i === oIdx }))}
-											class="h-5 w-5 border-slate-300 text-blue-600" 
+															onchange={() => {
+																q.options = q.options.map((option: any, i: number) => ({
+																	...option,
+																	is_correct: i === oIdx
+																}));
+															}}
+class="h-5 w-5 border-slate-300 text-blue-600" 
 										/>
 										<input bind:value={opt.text} class="flex-grow bg-transparent text-sm font-bold text-slate-700 outline-none" placeholder={`Option ${oIdx + 1}`} />
 									</div>
@@ -328,9 +411,9 @@
 						class="rounded-2xl bg-blue-600 px-12 py-4 text-sm font-black text-white shadow-2xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-3"
 					>
                         {#if formLoading}
-                            <Loader2 size={18} class="animate-spin" /> Finalizing...
+                            <Loader2 size={18} class="animate-spin" /> {editingId ? 'Saving...' : 'Finalizing...'}
                         {:else}
-                            <Save size={18} /> Seal Assessment
+                            <Save size={18} /> {editingId ? 'Save Changes' : 'Seal Assessment'}
                         {/if}
 					</button>
 				</div>
@@ -338,4 +421,3 @@
 		</div>
 	</div>
 {/if}
-</div>

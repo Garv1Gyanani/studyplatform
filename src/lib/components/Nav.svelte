@@ -12,7 +12,11 @@
 		Star,
 		Zap,
 		ChevronRight,
-		Loader2
+		Loader2,
+		ShieldCheck,
+		FileText,
+		FileQuestion,
+		BookOpen
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { onMount } from 'svelte';
@@ -56,13 +60,18 @@
 		}
 		searching = true;
 		
-		// Search across multiple content types (simulated/combined)
-		const { data: videos } = await supabase.from('videos').select('id, title').ilike('title', `%${searchQuery}%`).limit(3);
-		const { data: blogs } = await supabase.from('blogs').select('id, title').ilike('title', `%${searchQuery}%`).limit(3);
+		const [vRes, bRes, qRes, bkRes] = await Promise.all([
+			supabase.from('videos').select('id, title').ilike('title', `%${searchQuery}%`).limit(3),
+			supabase.from('blogs').select('id, slug, title').ilike('title', `%${searchQuery}%`).limit(3),
+			supabase.from('quizzes').select('id, title').ilike('title', `%${searchQuery}%`).limit(3),
+			supabase.from('books').select('id, title').ilike('title', `%${searchQuery}%`).limit(3)
+		]);
 		
 		searchResults = [
-			...(videos?.map(v => ({ id: v.id, title: v.title, type: 'Video' })) || []),
-			...(blogs?.map(b => ({ id: b.id, title: b.title, type: 'Blog' })) || [])
+			...(vRes.data?.map(v => ({ id: v.id, title: v.title, type: 'Video', url: `/courses/${v.id}` })) || []),
+			...(bRes.data?.map(b => ({ id: b.slug, title: b.title, type: 'Blog', url: `/blogs/${b.slug}` })) || []),
+			...(qRes.data?.map(q => ({ id: q.id, title: q.title, type: 'Quiz', url: `/quizzes/${q.id}` })) || []),
+			...(bkRes.data?.map(bk => ({ id: bk.id, title: bk.title, type: 'Book', url: `/books` })) || [])
 		];
 		searching = false;
 	}
@@ -88,9 +97,9 @@
 			<div class="flex items-center gap-2">
 				<a href="/" class="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
 					<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200">
-						<span class="text-xl font-bold">E</span>
+						<span class="text-xl font-bold">P</span>
 					</div>
-					<span class="text-xl font-bold tracking-tight text-slate-900">Edu<span class="text-blue-600">Platform</span></span>
+					<span class="text-xl font-bold tracking-tight text-slate-900">Programming<span class="text-blue-600">Tails</span></span>
 				</a>
 
 				<!-- Desktop Navigation -->
@@ -162,6 +171,11 @@
 								</div>
 								<div class="h-px bg-slate-50 mx-2"></div>
 								<div class="p-2 space-y-1">
+									{#if profile?.role === 'admin'}
+										<a href="/admin" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-indigo-600 bg-indigo-50 transition-all hover:bg-indigo-100">
+											<ShieldCheck size={18} /> Admin Center
+										</a>
+									{/if}
 									<a href="/dashboard" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50 hover:text-blue-600">
 										<LayoutDashboard size={18} /> Dashboard
 									</a>
@@ -289,10 +303,22 @@
 				{:else if searchResults.length > 0}
 					<div class="space-y-2">
 						{#each searchResults as result}
-							<button class="w-full p-4 flex items-center justify-between rounded-3xl hover:bg-slate-50 transition-all text-left">
+							<a 
+								href={result.url}
+								onclick={() => isSearchOpen = false} 
+								class="w-full p-4 flex items-center justify-between rounded-3xl hover:bg-slate-50 transition-all text-left"
+							>
 								<div class="flex items-center gap-4">
 									<div class="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-										{#if result.type === 'Video'}<Zap size={20} />{:else}<Settings size={20} />{/if}
+										{#if result.type === 'Video'}
+											<Zap size={20} />
+										{:else if result.type === 'Blog'}
+											<FileText size={20} />
+										{:else if result.type === 'Quiz'}
+											<FileQuestion size={20} />
+										{:else}
+											<BookOpen size={20} />
+										{/if}
 									</div>
 									<div>
 										<p class="font-black text-slate-900 line-clamp-1">{result.title}</p>
@@ -300,7 +326,7 @@
 									</div>
 								</div>
 								<ChevronRight size={20} class="text-slate-300" />
-							</button>
+							</a>
 						{/each}
 					</div>
 				{:else if searchQuery.length > 1}

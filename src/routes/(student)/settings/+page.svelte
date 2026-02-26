@@ -60,6 +60,47 @@
 		saving = false;
 	}
 
+	async function handleAvatarUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (!target.files || target.files.length === 0 || !user) return;
+
+		const file = target.files[0];
+		const fileExt = file.name.split('.').pop();
+		const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+		saving = true;
+		try {
+			// 1. Upload to Supabase Storage
+			const { error: uploadError } = await supabase.storage
+				.from('avatars')
+				.upload(filePath, file);
+
+			if (uploadError) throw uploadError;
+
+			// 2. Get Public URL
+			const { data: { publicUrl } } = supabase.storage
+				.from('avatars')
+				.getPublicUrl(filePath);
+
+			// 3. Update Profile
+			const { error: updateError } = await supabase
+				.from('profiles')
+				.update({ avatar_url: publicUrl })
+				.eq('id', user.id);
+
+			if (updateError) throw updateError;
+
+			// 4. Update Local State
+			profile.avatar_url = publicUrl;
+			saved = true;
+			setTimeout(() => saved = false, 3000);
+		} catch (error: any) {
+			alert(error.message);
+		} finally {
+			saving = false;
+		}
+	}
+
 	async function handlePasswordReset() {
 		if (!user?.email) return;
 		const { error } = await supabase.auth.resetPasswordForEmail(user.email);
@@ -129,8 +170,22 @@
 										</div>
 									{/if}
 								</div>
-								<button class="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-600">
-									<Camera size={16} />
+								<input 
+									type="file" 
+									id="avatar-input" 
+									accept="image/*" 
+									class="hidden" 
+									onchange={handleAvatarUpload}
+								/>
+								<button 
+									onclick={() => document.getElementById('avatar-input')?.click()}
+									class="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-600"
+								>
+									{#if saving}
+										<Loader2 size={16} class="animate-spin" />
+									{:else}
+										<Camera size={16} />
+									{/if}
 								</button>
 							</div>
 							<div>

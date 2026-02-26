@@ -19,6 +19,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let news = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -27,16 +28,21 @@
 	let title = $state('');
 	let summary = $state('');
 	let content = $state('');
-	let category = $state('Exams');
+	let categoryId = $state('');
 	let isPublished = $state(true);
+	let editingId = $state<string | null>(null);
 
-	onMount(fetchNews);
+	onMount(async () => {
+		fetchNews();
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	});
 
 	async function fetchNews() {
 		loading = true;
 		const { data, error } = await supabase
 			.from('news')
-			.select('*')
+			.select('*, categories(name)')
 			.order('published_at', { ascending: false });
 		
 		if (!error) news = data;
@@ -45,14 +51,19 @@
 
 	async function handleSaveNews() {
 		formLoading = true;
-		const { error } = await supabase.from('news').insert({
+		
+		const newsData = {
 			title,
 			summary,
 			content,
-			category,
+			category_id: categoryId || null,
 			is_published: isPublished,
-			published_at: new Date().toISOString()
-		});
+			published_at: isPublished ? (isPublished && !editingId ? new Date().toISOString() : null) : null
+		};
+
+		const { error } = editingId 
+			? await supabase.from('news').update(newsData).eq('id', editingId)
+			: await supabase.from('news').insert(newsData);
 
 		if (!error) {
 			isFormOpen = false;
@@ -64,11 +75,28 @@
 		formLoading = false;
 	}
 
+	function startEdit(article: any) {
+		editingId = article.id;
+		title = article.title;
+		summary = article.summary || '';
+		content = article.content || '';
+		categoryId = article.category_id || '';
+		isPublished = article.is_published;
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		summary = '';
 		content = '';
-		category = 'Exams';
+		categoryId = '';
+	}
+	async function deleteNews(id: string) {
+		if (confirm('Are you sure you want to delete this news article?')) {
+			const { error } = await supabase.from('news').delete().match({ id });
+			if (!error) fetchNews();
+		}
 	}
 </script>
 
@@ -121,7 +149,7 @@
 								</td>
 								<td class="px-6 py-4">
 									<span class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase text-indigo-600 tracking-widest">
-										<Tag size={12} /> {article.category}
+										<Tag size={12} /> {article.categories?.name || article.category || 'General'}
 									</span>
 								</td>
 								<td class="px-6 py-4 text-slate-500 text-sm">
@@ -129,8 +157,18 @@
 								</td>
 								<td class="px-6 py-4 text-right">
 									<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 size={16} /></button>
-										<button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+										<button 
+											onclick={() => startEdit(article)}
+											class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+										>
+											<Edit2 size={16} />
+										</button>
+										<button 
+											onclick={() => deleteNews(article.id)}
+											class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+										>
+											<Trash2 size={16} />
+										</button>
 									</div>
 								</td>
 							</tr>
@@ -155,7 +193,9 @@
 			onclick={e => e.stopPropagation()}
 		>
 			<div class="px-10 py-8 border-b border-slate-100 flex items-center justify-between">
-				<h2 class="text-2xl font-black text-slate-900 tracking-tight">Post Education News</h2>
+				<h2 class="text-2xl font-black text-slate-900 tracking-tight">
+					{editingId ? 'Edit News Article' : 'Post Education News'}
+				</h2>
 				<button onclick={() => isFormOpen = false} class="p-2 text-slate-400 hover:text-slate-900">
 					<X size={24} />
 				</button>
@@ -170,11 +210,11 @@
 						</div>
 						<div class="md:col-span-4 space-y-2">
 							<label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Category</label>
-							<select bind:value={category} class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-basis font-bold outline-none focus:bg-white transition-all cursor-pointer">
-								<option>Exams</option>
-								<option>Scholarships</option>
-								<option>EdTech</option>
-								<option>Local News</option>
+							<select bind:value={categoryId} class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-basis font-bold outline-none focus:bg-white transition-all cursor-pointer">
+								<option value="">Select Category</option>
+								{#each categories as cat}
+									<option value={cat.id}>{cat.name}</option>
+								{/each}
 							</select>
 						</div>
 					</div>
@@ -207,7 +247,7 @@
 								{#if formLoading}
 									<Loader2 size={18} class="animate-spin" /> Posting...
 								{:else}
-									<Save size={18} /> Post News
+									<Save size={18} /> {editingId ? 'Update News' : 'Post News'}
 								{/if}
 							</button>
 						</div>

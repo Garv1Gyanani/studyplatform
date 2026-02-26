@@ -10,4 +10,5 @@
 	<main class="flex-grow">
 		{@render children()}
 	</main>
+	<Footer />
 </div>

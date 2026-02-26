@@ -1,4 +1,4 @@
-# EduPlatform — Product Requirements Document
+# Programming Tails — Product Requirements Document
 ## Full-Stack EdTech Web Application
 ### Built with SvelteKit & Supabase
 
@@ -8,7 +8,7 @@ Version 1.0
 
 ## 1. Project Overview
 
-EduPlatform is a modern, feature-rich educational web application designed to serve two primary user groups: **Administrators** who manage and publish educational content, and **Students** who consume that content in an engaging, gamified environment.
+Programming Tails is a modern, feature-rich educational web application designed to serve two primary user groups: **Administrators** who manage and publish educational content, and **Students** who consume that content in an engaging, gamified environment.
 
 ### Core Principles
 - **Content-first**: All learning materials (videos, quizzes, notes, books, blogs) are managed by admins and delivered to students seamlessly.

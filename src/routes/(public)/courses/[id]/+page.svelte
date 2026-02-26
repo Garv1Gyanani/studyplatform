@@ -17,7 +17,7 @@
 		BarChart3
 	} from 'lucide-svelte';
 	import { cn } from '$lib/utils';
-	import { fade, fly } from 'svelte/transition';
+	import { fade, fly, scale } from 'svelte/transition';
 	import { openLogin } from '$lib/stores/auth';
 
 	let id = page.params.id;
@@ -26,6 +26,9 @@
 	let loading = $state(true);
 	let user = $state<any>(null);
 	let isBookmarked = $state(false);
+	let isCompleted = $state(false);
+	let completing = $state(false);
+	let enrolledCount = $state(0);
 
 	onMount(async () => {
 		const { data: sessionData } = await supabase.auth.getSession();
@@ -40,26 +43,45 @@
 		
 		video = videoData;
 
-		// Fetch Related
-		const { data: relatedData } = await supabase
-			.from('videos')
-			.select('id, title, thumbnail_url, difficulty_level')
-			.eq('category_id', videoData.category_id)
-			.neq('id', id)
-			.limit(4);
-		
-		relatedVideos = relatedData || [];
-
-		// Check bookmark
-		if (user) {
-			const { data: bookmark } = await supabase
-				.from('bookmarks')
-				.select('*')
-				.eq('user_id', user.id)
-				.eq('content_id', id)
-				.single();
-			isBookmarked = !!bookmark;
+		if (videoData) {
+			// Fetch Related
+			const { data: relatedData } = await supabase
+				.from('videos')
+				.select('id, title, thumbnail_url, difficulty_level')
+				.eq('category_id', videoData.category_id)
+				.neq('id', id)
+				.limit(4);
+			
+			relatedVideos = relatedData || [];
 		}
+
+		// Check bookmark & progress
+		if (user) {
+			const [bookmarkRes, progressRes] = await Promise.all([
+				supabase
+					.from('bookmarks')
+					.select('*')
+					.eq('user_id', user.id)
+					.eq('content_id', id)
+					.single(),
+				supabase
+					.from('video_progress')
+					.select('*')
+					.eq('user_id', user.id)
+					.eq('video_id', id)
+					.single()
+			]);
+			
+			isBookmarked = !!bookmarkRes.data;
+			isCompleted = progressRes.data?.completed || false;
+		}
+
+		// Enrolment count
+		const { count } = await supabase
+			.from('video_progress')
+			.select('*', { count: 'exact', head: true })
+			.eq('video_id', id);
+		enrolledCount = count || 0;
 
 		loading = false;
 	});
@@ -77,6 +99,39 @@
 				content_id: id 
 			});
 			isBookmarked = true;
+		}
+	}
+
+	async function completeVideo() {
+		if (!user) return openLogin();
+		if (isCompleted || completing) return;
+
+		completing = true;
+		try {
+			// Record progress
+			const { error: progressError } = await supabase
+				.from('video_progress')
+				.upsert({
+					user_id: user.id,
+					video_id: id,
+					completed: true,
+					progress_seconds: 0,
+					updated_at: new Date().toISOString()
+				});
+			
+			if (progressError) throw progressError;
+
+			// Award points
+			await supabase.rpc('increment_points', { 
+				user_id: user.id, 
+				points_to_add: 100 
+			});
+
+			isCompleted = true;
+		} catch (e) {
+			console.error(e);
+		} finally {
+			completing = false;
 		}
 	}
 </script>
@@ -103,7 +158,7 @@
 								<PlayCircle size={32} />
 							</div>
 							<h3 class="text-3xl font-black text-white tracking-tight">Login to watch this class</h3>
-							<p class="text-slate-300 mt-2 max-w-sm">Join EduPlatform today to access our full library of educational content.</p>
+							<p class="text-slate-300 mt-2 max-w-sm">Join Code Shiksha today to access our full library of educational content.</p>
 							<button 
 								onclick={openLogin}
 								class="mt-8 px-10 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-200/20 hover:bg-blue-700 transition-all active:scale-95"
@@ -114,10 +169,15 @@
 					{/if}
 
 					{#if video.youtube_url}
+						{@const getYoutubeId = (url: string) => {
+							const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+							const match = url.match(regExp);
+							return (match && match[2].length === 11) ? match[2] : null;
+						}}
 						<iframe 
 							width="100%" 
 							height="100%" 
-							src={`https://www.youtube.com/embed/${video.youtube_url.split('v=')[1] || video.youtube_url.split('/').pop()}`}
+							src={`https://www.youtube.com/embed/${getYoutubeId(video.youtube_url)}`}
 							title={video.title}
 							frameborder="0"
 							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -171,7 +231,7 @@
 					<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 bg-white rounded-[32px] border border-slate-100 shadow-sm">
 						<div class="space-y-1">
 							<p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Duration</p>
-							<p class="font-bold text-slate-900 flex items-center gap-2"><Clock size={16} class="text-blue-500" /> 1h 24m</p>
+							<p class="font-bold text-slate-900 flex items-center gap-2"><Clock size={16} class="text-blue-500" /> {video.duration || '15m'}</p>
 						</div>
 						<div class="space-y-1">
 							<p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Level</p>
@@ -183,7 +243,7 @@
 						</div>
 						<div class="space-y-1">
 							<p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Students</p>
-							<p class="font-bold text-slate-900">1,204 Enrolled</p>
+							<p class="font-bold text-slate-900">{enrolledCount.toLocaleString()} Enrolled</p>
 						</div>
 					</div>
 
@@ -229,18 +289,53 @@
 					{/each}
 				</div>
 
-				<!-- Promo Widget -->
-				<div class="rounded-[40px] bg-indigo-600 p-10 text-white relative overflow-hidden shadow-2xl">
+				<!-- Mastery Widget -->
+				<div class={cn("rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl transition-all duration-700", 
+					isCompleted ? "bg-green-600" : "bg-indigo-600"
+				)}>
 					<div class="absolute -right-10 -bottom-10 h-40 w-40 bg-white blur-[80px] opacity-20"></div>
 					<div class="relative z-10 flex flex-col items-center text-center">
-						<div class="h-16 w-16 rounded-[24px] bg-white text-indigo-600 flex items-center justify-center mb-6 shadow-xl">
-							<CheckCircle2 size={32} />
+						<div class={cn("h-16 w-16 rounded-[24px] bg-white flex items-center justify-center mb-6 shadow-xl transition-all", 
+							isCompleted ? "text-green-600" : "text-indigo-600"
+						)}>
+							{#if isCompleted}
+								<div in:scale>
+									<CheckCircle2 size={32} />
+								</div>
+							{:else}
+								<Star size={32} />
+							{/if}
 						</div>
-						<h3 class="text-2xl font-black leading-tight">Master this topic!</h3>
-						<p class="mt-2 text-indigo-100 text-sm font-medium">Complete the quiz after watching to earn 100 XP and points.</p>
-						<button class="mt-8 w-full py-4 rounded-2xl bg-white text-indigo-600 font-black text-sm hover:scale-105 transition-all">
-							Take Final Quiz
-						</button>
+						
+						<h3 class="text-2xl font-black leading-tight">
+							{isCompleted ? "Topic Mastered!" : "Master this topic!"}
+						</h3>
+						<p class="mt-2 text-indigo-50 text-sm font-medium">
+							{isCompleted 
+								? "Great job! You've earned 100 XP for completing this class." 
+								: "Watch the full class and mark as complete to earn 100 XP."}
+						</p>
+
+						{#if !isCompleted}
+							<button 
+								onclick={completeVideo}
+								disabled={completing}
+								class="mt-8 w-full py-4 rounded-2xl bg-white text-indigo-600 font-black text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+							>
+								{#if completing}
+									<Loader2 size={18} class="animate-spin" /> RECORDING...
+								{:else}
+									<CheckCircle2 size={18} /> Mark as Complete
+								{/if}
+							</button>
+						{:else}
+							<a 
+								href="/quizzes" 
+								class="mt-8 w-full py-4 rounded-2xl bg-white/20 text-white font-black text-sm hover:bg-white/30 transition-all flex items-center justify-center gap-2"
+							>
+								Try a Related Quiz <ChevronRight size={18} />
+							</a>
+						{/if}
 					</div>
 				</div>
 			</div>

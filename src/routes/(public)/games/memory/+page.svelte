@@ -2,7 +2,7 @@
 	import { supabase } from '$lib/supabase';
 	import { Dices, Timer, Trophy, RefreshCw, ArrowRight, X, RotateCcw } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
-	import { fade, fly, scale, flip } from 'svelte/transition';
+	import { fade, fly, scale } from 'svelte/transition';
 
 	let gameState = $state<'idle' | 'playing' | 'result'>('idle');
 	let score = $state(0);

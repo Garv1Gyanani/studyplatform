@@ -20,6 +20,7 @@
 	import { fade, fly } from 'svelte/transition';
 
 	let quizzes = $state<any[]>([]);
+	let categories = $state<any[]>([]);
 	let loading = $state(true);
 	let isFormOpen = $state(false);
 	let formLoading = $state(false);
@@ -29,18 +30,24 @@
 	let description = $state('');
 	let timeLimit = $state(15);
 	let passingScore = $state(70);
+	let categoryId = $state('');
 	let isPublished = $state(false);
+	let editingId = $state<string | null>(null);
 
 	// Question State
 	let questions = $state<any[]>([]);
 
-	onMount(fetchQuizzes);
+	onMount(async () => {
+		fetchQuizzes();
+		const { data } = await supabase.from('categories').select('*').order('name');
+		categories = data || [];
+	});
 
 	async function fetchQuizzes() {
 		loading = true;
 		const { data, error } = await supabase
 			.from('quizzes')
-			.select('*')
+			.select('*, categories(name)')
 			.order('created_at', { ascending: false });
 		
 		if (!error) quizzes = data;
@@ -67,38 +74,46 @@
 	async function handleSaveQuiz() {
 		formLoading = true;
 		
-		// 1. Insert Quiz
-		const { data: quizData, error: quizError } = await supabase
-			.from('quizzes')
-			.insert({
-				title,
-				description,
-				time_limit: timeLimit,
-				passing_score: passingScore,
-				is_published: isPublished
-			})
-			.select()
-			.single();
+		const quizData = {
+			title,
+			description,
+			time_limit: timeLimit,
+			passing_score: passingScore,
+			category_id: categoryId || null,
+			is_published: isPublished
+		};
 
-		if (quizError) {
-			alert(quizError.message);
-			formLoading = false;
-			return;
+		let targetQuizId = editingId;
+
+		if (editingId) {
+			const { error } = await supabase.from('quizzes').update(quizData).eq('id', editingId);
+			if (error) {
+				alert(error.message);
+				formLoading = false;
+				return;
+			}
+			// Clear old questions for update simplicity
+			await supabase.from('quiz_questions').delete().eq('quiz_id', editingId);
+		} else {
+			const { data, error } = await supabase.from('quizzes').insert(quizData).select().single();
+			if (error) {
+				alert(error.message);
+				formLoading = false;
+				return;
+			}
+			targetQuizId = data.id;
 		}
 
-		// 2. Insert Questions
+		// Insert Questions
 		const questionsToInsert = questions.map(q => ({
-			quiz_id: quizData.id,
+			quiz_id: targetQuizId,
 			question: q.question,
 			type: q.type,
 			options: q.options
 		}));
 
 		if (questionsToInsert.length > 0) {
-			const { error: qError } = await supabase
-				.from('quiz_questions')
-				.insert(questionsToInsert);
-			
+			const { error: qError } = await supabase.from('quiz_questions').insert(questionsToInsert);
 			if (qError) alert(qError.message);
 		}
 
@@ -108,13 +123,36 @@
 		formLoading = false;
 	}
 
+	async function startEdit(quiz: any) {
+		editingId = quiz.id;
+		title = quiz.title;
+		description = quiz.description || '';
+		timeLimit = quiz.time_limit || 15;
+		passingScore = quiz.passing_score || 70;
+		categoryId = quiz.category_id || '';
+		isPublished = quiz.is_published;
+		
+		// Fetch questions
+		const { data } = await supabase.from('quiz_questions').select('*').eq('quiz_id', quiz.id);
+		questions = data || [];
+		isFormOpen = true;
+	}
+
 	function resetForm() {
+		editingId = null;
 		title = '';
 		description = '';
 		timeLimit = 15;
 		passingScore = 70;
+		categoryId = '';
 		questions = [];
 		isPublished = false;
+	}
+	async function deleteQuiz(id: string) {
+		if (confirm('Are you sure you want to delete this quiz?')) {
+			const { error } = await supabase.from('quizzes').delete().match({ id });
+			if (!error) fetchQuizzes();
+		}
 	}
 </script>
 
@@ -201,7 +239,14 @@
 							<tr class="group hover:bg-slate-50/50 transition-colors">
 								<td class="px-6 py-4">
 									<p class="font-bold text-slate-900">{quiz.title}</p>
-									<p class="text-xs text-slate-400 mt-0.5 line-clamp-1">{quiz.description}</p>
+									<div class="flex items-center gap-2 mt-0.5">
+										<p class="text-xs text-slate-400 line-clamp-1">{quiz.description}</p>
+										{#if quiz.categories?.name}
+											<span class="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+												{quiz.categories.name}
+											</span>
+										{/if}
+									</div>
 								</td>
 								<td class="px-6 py-4 text-center">
 									<span class="text-sm font-medium text-slate-600">{quiz.time_limit} mins</span>
@@ -216,10 +261,16 @@
 								</td>
 								<td class="px-6 py-4 text-right">
 									<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+										<button 
+											onclick={() => startEdit(quiz)}
+											class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+										>
 											<Edit2 size={18} />
 										</button>
-										<button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+										<button 
+											onclick={() => deleteQuiz(quiz.id)}
+											class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+										>
 											<Trash2 size={18} />
 										</button>
 									</div>
@@ -248,8 +299,12 @@
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-slate-100 px-8 py-6 bg-slate-50/50">
 				<div>
-					<h2 class="text-xl font-bold text-slate-900">Quiz Builder</h2>
-					<p class="text-xs font-medium text-slate-500">Design an engaging assessment for your students</p>
+					<h2 class="text-xl font-bold text-slate-900">
+						{editingId ? 'Edit Quiz' : 'Quiz Builder'}
+					</h2>
+					<p class="text-xs font-medium text-slate-500">
+						{editingId ? 'Update your' : 'Design an'} engaging assessment for your students
+					</p>
 				</div>
 				<button onclick={() => isFormOpen = false} class="rounded-full p-2 text-slate-400 hover:bg-white hover:text-slate-900 shadow-sm border border-transparent hover:border-slate-100 transition-all">
 					<X size={20} />
@@ -264,6 +319,19 @@
 						<div class="space-y-1">
 							<label class="text-xs font-bold text-slate-500">Quiz Title</label>
 							<input bind:value={title} class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none border-transparent focus:border-blue-500" placeholder="e.g. Biology Basics" />
+						</div>
+						<div class="space-y-1">
+							<label for="quiz-category" class="text-xs font-bold text-slate-500">Category</label>
+							<select 
+								id="quiz-category"
+								bind:value={categoryId}
+								class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white cursor-pointer"
+							>
+								<option value="">Select Category (Optional)</option>
+								{#each categories as cat}
+									<option value={cat.id}>{cat.name}</option>
+								{/each}
+							</select>
 						</div>
 						<div class="space-y-1">
 							<label class="text-xs font-bold text-slate-500">Description</label>
@@ -342,7 +410,7 @@
 															type="checkbox" 
 															checked={option.is_correct} 
 															onchange={() => {
-																question.options = question.options.map((opt, i) => ({
+																question.options = question.options.map((opt: any, i: number) => ({
 																	...opt,
 																	is_correct: i === oIndex
 																}));
@@ -377,9 +445,9 @@
 						class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-xl shadow-slate-200 hover:bg-black disabled:opacity-50 transition-all"
 					>
 						{#if formLoading}
-							<Loader2 size={18} class="animate-spin" /> Sealing...
+							<Loader2 size={18} class="animate-spin" /> {editingId ? 'Saving...' : 'Sealing...'}
 						{:else}
-							<Save size={18} /> Save & Close
+							<Save size={18} /> {editingId ? 'Save Changes' : 'Save & Close'}
 						{/if}
 					</button>
 				</div>

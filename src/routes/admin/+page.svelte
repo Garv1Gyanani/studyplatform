@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Video, Users, FileQuestion, BookOpen, TrendingUp, Clock, CheckCircle2, Loader2 } from 'lucide-svelte';
+	import { Video, Users, FileQuestion, BookOpen, TrendingUp, Clock, CheckCircle2, Loader2, LayoutDashboard } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
@@ -138,6 +138,10 @@
 						<a href="/admin/blogs" class="flex items-center gap-3 rounded-xl border border-green-50 bg-green-50/20 px-4 py-3 text-sm font-bold text-green-600 transition-all hover:bg-green-50">
 							<BookOpen size={18} />
 							Write Blog Post
+						</a>
+						<a href="/admin/categories" class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-100">
+							<LayoutDashboard size={18} />
+							Manage Categories
 						</a>
 					</div>
 				</div>
