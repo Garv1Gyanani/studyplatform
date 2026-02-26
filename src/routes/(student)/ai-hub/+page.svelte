@@ -175,7 +175,7 @@
 		<!-- Unified Message Flow -->
 		<div 
 			bind:this={scrollContainer}
-			class="flex-1 overflow-y-auto pt-8 pb-32"
+			class="flex-1 overflow-y-auto pt-8 pb-48 scroll-smooth"
 		>
 			<div class="max-w-4xl mx-auto w-full px-4 md:px-8 space-y-12">
 				{#each messages as message, i}

@@ -29,6 +29,8 @@
 </svelte:head>
 
 <AuthModal bind:isOpen={$isAuthModalOpen} />
-<AIAssistant />
+{#if !page.url.pathname.includes('/ai-hub')}
+	<AIAssistant />
+{/if}
 
 {@render children()}
