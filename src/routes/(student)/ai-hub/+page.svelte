@@ -14,7 +14,8 @@
 		Sparkles,
 		Zap,
 		Search,
-		Clock
+		Clock,
+		BrainCircuit
 	} from 'lucide-svelte';
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
@@ -26,7 +27,7 @@
 	let messages = $state<{ role: 'user' | 'assistant'; content: string; timestamp: Date }[]>([
 		{
 			role: 'assistant',
-			content: 'Hello! I am **Programming Tails Bot**, your advanced AI learning partner. I can help you debug code, explain complex concepts, or plan your study schedule. \n\nWhat are we building today?',
+			content: 'Hello! I am **Programming Tails Bot**, your advanced AI learning partner. How can I assist your learning journey today?',
 			timestamp: new Date()
 		}
 	]);
@@ -35,7 +36,6 @@
 		{ id: 1, title: 'Python Data Structures', date: 'Just now' },
 		{ id: 2, title: 'Understanding React State', date: '2h ago' },
 		{ id: 3, title: 'SQL Joins Explained', date: 'Yesterday' },
-		{ id: 4, title: 'Machine Learning Basics', date: 'Feb 24' },
 	]);
 
 	let scrollContainer: HTMLDivElement;
@@ -98,7 +98,7 @@
 		messages = [
 			{
 				role: 'assistant',
-				content: 'New session started. How can I assist your learning today?',
+				content: 'New session started. How can I help you today?',
 				timestamp: new Date()
 			}
 		];
@@ -109,179 +109,178 @@
 	});
 </script>
 
-<div class="h-[calc(100vh-64px)] w-full flex bg-[#0d1117] font-sans text-slate-100 overflow-hidden">
-	<!-- ChatGPT/Grok Style Sidebar -->
+<div class="h-[calc(100vh-64px)] w-full flex bg-white font-sans text-slate-900 overflow-hidden selection:bg-blue-100">
+	<!-- White & Blue Professional Sidebar -->
 	<aside 
 		class={cn(
-			"h-full bg-[#0d1117] border-r border-slate-800 transition-all duration-300 ease-in-out flex flex-col shrink-0 z-20",
-			sidebarOpen ? "w-[260px]" : "w-0 overflow-hidden"
+			"h-full bg-slate-50 border-r border-slate-200 transition-all duration-300 ease-in-out flex flex-col shrink-0 z-20",
+			sidebarOpen ? "w-[300px]" : "w-0 overflow-hidden"
 		)}
 	>
-		<div class="w-[260px] h-full flex flex-col p-3">
-			<!-- New Chat Button -->
+		<div class="w-[300px] h-full flex flex-col p-6">
+			<div class="flex items-center gap-3 mb-10 px-2">
+				<div class="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+					<BrainCircuit size={20} strokeWidth={2.5} />
+				</div>
+				<div>
+					<h3 class="text-xs font-black text-slate-900 uppercase tracking-widest leading-none mb-1">TailBot AI</h3>
+					<span class="text-[9px] font-black text-blue-600 uppercase tracking-tighter">Premium Intelligence</span>
+				</div>
+			</div>
+
 			<button 
 				onclick={clearChat}
-				class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-all text-sm font-medium mb-4 group"
+				class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-blue-600 text-blue-600 rounded-2xl hover:bg-blue-50 transition-all font-black text-sm shadow-sm mb-8"
 			>
-				<Plus size={16} class="text-slate-400 group-hover:text-white" />
-				<span class="text-slate-200">New Chat</span>
-				<div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-					<div class="px-1.5 py-0.5 rounded-md border border-slate-700 text-[10px]">Ctrl+N</div>
-				</div>
+				<Plus size={18} />
+				<span>New Session</span>
 			</button>
 
-			<div class="flex-1 overflow-y-auto space-y-6">
-				<!-- History Groups -->
+			<div class="flex-1 overflow-y-auto space-y-8">
 				<div>
-					<h3 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Recent chats</h3>
-					<div class="space-y-0.5">
+					<h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-2">Recent chats</h3>
+					<div class="space-y-2">
 						{#each chatHistory as history}
-							<button class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-all text-left group">
-								<MessageSquare size={14} class="text-slate-500 shrink-0" />
-								<span class="text-[13px] font-medium truncate flex-1 text-slate-300 group-hover:text-white">{history.title}</span>
+							<button class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white transition-all text-left group border border-transparent hover:border-blue-100 hover:shadow-sm">
+								<MessageSquare size={16} class="text-slate-400 group-hover:text-blue-600" />
+								<span class="text-sm font-bold truncate flex-1 text-slate-600 group-hover:text-slate-900">{history.title}</span>
 							</button>
 						{/each}
 					</div>
 				</div>
 			</div>
 
-			<!-- Sidebar Footer -->
-			<div class="pt-4 mt-auto border-t border-slate-800">
-				<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 transition-all text-[13px] font-medium text-slate-300">
-					<div class="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white">R</div>
-					<span>Premium Student</span>
-					<ChevronDown size={14} class="ml-auto text-slate-500" />
+			<div class="pt-6 mt-auto border-t border-slate-200">
+				<button class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white transition-all text-sm font-black text-slate-500 hover:text-blue-600">
+					<Settings size={20} />
+					<span>User Preferences</span>
 				</button>
 			</div>
 		</div>
 	</aside>
 
-	<!-- Main Chat Area -->
-	<main class="flex-1 flex flex-col h-full bg-[#0d1117] relative">
-		<!-- Top Bar -->
-		<header class="h-14 flex items-center justify-between px-4 border-b border-slate-800/50 sticky top-0 z-10 bg-[#0d1117]/80 backdrop-blur-sm">
-			<div class="flex items-center gap-2">
+	<!-- Main Chat Area: Centered & Minimal but Light -->
+	<main class="flex-1 flex flex-col h-full bg-white relative">
+		<!-- Ultra-clean Header -->
+		<header class="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+			<div class="flex items-center gap-4">
 				<button 
 					onclick={() => sidebarOpen = !sidebarOpen}
-					class="p-2 hover:bg-slate-800 rounded-lg transition-all text-slate-400"
-					aria-label="Toggle Sidebar"
+					class="p-2.5 hover:bg-slate-50 rounded-xl transition-all text-slate-500 border border-slate-100 bg-white shadow-sm"
 				>
-					<Menu size={18} />
+					<Menu size={20} />
 				</button>
-				<div class="px-3 py-1 rounded-lg hover:bg-slate-800 transition-all cursor-pointer">
-					<span class="text-sm font-bold text-slate-200">TailBot 4o</span>
-					<ChevronDown size={14} class="inline ml-1 text-slate-500" />
+				<div class="flex items-center gap-3">
+					<h1 class="text-sm font-black tracking-tight text-slate-900">Programming Tails Bot</h1>
+					<div class="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></div>
 				</div>
 			</div>
 			
-			<div class="flex items-center gap-3">
-				<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
-					<Search size={18} />
-				</button>
-				<div class="h-4 w-[1px] bg-slate-800"></div>
-				<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
-					<Settings size={18} />
-				</button>
+			<div class="flex items-center gap-4">
+				<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100">
+					<Zap size={14} fill="currentColor" />
+					Neural Engine v2
+				</div>
 			</div>
 		</header>
 
-		<!-- Messages: Centered & Minimal -->
+		<!-- Messages Container -->
 		<div 
 			bind:this={scrollContainer}
-			class="flex-1 overflow-y-auto pt-8 pb-32 scroll-smooth"
+			class="flex-1 overflow-y-auto pt-10 pb-48 scroll-smooth"
 		>
-			<div class="max-w-[760px] mx-auto w-full px-4 space-y-10">
+			<div class="max-w-[800px] mx-auto w-full px-6 space-y-12">
 				{#each messages as message}
-					<div class="group flex flex-col gap-3">
-						<div class="flex items-center gap-3">
+					<div class="group flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+						<div class="flex items-center gap-4">
 							<div class={cn(
-								"h-7 w-7 rounded-md flex items-center justify-center shrink-0 border",
+								"h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border-2 shadow-sm font-black text-[10px]",
 								message.role === 'assistant' 
 									? "bg-blue-600 border-blue-500 text-white" 
-									: "bg-teal-600 border-teal-500 text-white"
+									: "bg-white border-slate-200 text-slate-500"
 							)}>
 								{#if message.role === 'assistant'}
-									<Bot size={16} strokeWidth={2.5} />
+									<Bot size={20} strokeWidth={2.5} />
 								{:else}
-									<User size={16} strokeWidth={2.5} />
+									<User size={20} strokeWidth={2.5} />
 								{/if}
 							</div>
-							<span class="text-sm font-black text-slate-100 uppercase tracking-tight">
-								{message.role === 'assistant' ? 'TailBot' : 'You'}
-							</span>
+							<div class="flex flex-col">
+								<span class="text-[10px] font-black uppercase tracking-widest {message.role === 'assistant' ? 'text-blue-600' : 'text-slate-400'}">
+									{message.role === 'assistant' ? 'TailBot AI' : 'Student'}
+								</span>
+								<span class="text-[9px] font-bold text-slate-300">
+									{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+								</span>
+							</div>
 						</div>
 
-						<div class="pl-0 md:pl-10">
-							<div class="markdown-pro text-[16px] leading-[1.7] text-slate-300 font-normal antialiased">
+						<div class="pl-13">
+							<div class="markdown-pro text-[17px] leading-[1.7] text-slate-700 font-medium selection:bg-blue-200 antialiased">
 								{#if message.role === 'assistant'}
 									{@html marked(message.content)}
 								{:else}
 									<p class="whitespace-pre-wrap">{message.content}</p>
 								{/if}
 							</div>
-							
-							{#if message.role === 'assistant'}
-								<div class="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-									<button class="p-1.5 hover:bg-slate-800 rounded text-slate-500 hover:text-slate-300 transition-all">
-										<Zap size={14} />
-									</button>
-									<button class="p-1.5 hover:bg-slate-800 rounded text-slate-500 hover:text-slate-300 transition-all">
-										<Trash2 size={14} />
-									</button>
-								</div>
-							{/if}
 						</div>
 					</div>
 				{/each}
 
 				{#if isLoading}
-					<div class="flex flex-col gap-3 animate-pulse">
-						<div class="flex items-center gap-3">
-							<div class="h-7 w-7 rounded-md bg-slate-800"></div>
-							<div class="h-2 w-20 bg-slate-800 rounded-full"></div>
+					<div class="flex flex-col gap-4 animate-pulse">
+						<div class="flex items-center gap-4">
+							<div class="h-9 w-9 rounded-xl bg-blue-100 border-2 border-blue-50"></div>
+							<div class="h-2 w-24 bg-slate-100 rounded-full"></div>
 						</div>
-						<div class="pl-10 space-y-2">
-							<div class="h-2.5 w-full bg-slate-800/50 rounded-full"></div>
-							<div class="h-2.5 w-4/5 bg-slate-800/50 rounded-full"></div>
+						<div class="pl-13 space-y-3">
+							<div class="h-3 w-full bg-slate-50 rounded-full"></div>
+							<div class="h-3 w-4/5 bg-slate-50 rounded-full"></div>
 						</div>
 					</div>
 				{/if}
 			</div>
 		</div>
 
-		<!-- Footer Input Area: Fixed at bottom, Centered -->
-		<div class="absolute bottom-0 inset-x-0 p-4 md:p-6 bg-gradient-to-t from-[#0d1117] via-[#0d1117]/95 to-transparent">
-			<div class="max-w-[760px] mx-auto w-full relative">
-				<div class="relative bg-[#161b22] border border-slate-800 rounded-2xl shadow-xl transition-all focus-within:border-slate-700">
+		<!-- Footer Action Area -->
+		<div class="absolute bottom-0 inset-x-0 p-6 md:p-10 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none">
+			<div class="max-w-[800px] mx-auto w-full pointer-events-auto">
+				<div class="relative bg-white border-2 border-slate-200 rounded-[28px] shadow-2xl shadow-slate-200/50 transition-all focus-within:border-blue-600 focus-within:ring-8 focus-within:ring-blue-600/5 overflow-hidden">
 					<textarea 
 						bind:value={inputMessage}
 						onkeydown={handleKeydown}
-						placeholder="Message TailBot..."
-						class="w-full bg-transparent px-4 py-4 text-sm font-medium text-slate-100 outline-none resize-none min-h-[56px] h-auto max-h-[200px] placeholder:text-slate-500 pr-12"
+						placeholder="What are we mastering today?"
+						class="w-full bg-transparent px-8 py-6 text-basis font-bold text-slate-900 outline-none resize-none min-h-[76px] h-auto max-h-[300px] placeholder:text-slate-300"
 						rows="1"
 					></textarea>
 					
-					<div class="flex items-center justify-between px-3 pb-3">
-						<div class="flex items-center gap-1">
-							<button class="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all" title="Attach">
-								<Paperclip size={18} />
+					<div class="flex items-center justify-between px-6 pb-6">
+						<div class="flex items-center gap-2">
+							<button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 text-[10px] font-black uppercase text-slate-500 hover:bg-slate-100 transition-all border border-slate-100">
+								<Paperclip size={14} class="text-blue-600" />
+								<span>Attach</span>
 							</button>
-							<button class="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all" title="Features">
-								<Sparkles size={18} />
+							<button 
+								onclick={clearChat}
+								class="p-2.5 text-slate-300 hover:text-red-500 transition-colors"
+								title="Reset"
+							>
+								<Trash2 size={20} />
 							</button>
 						</div>
 						
 						<button 
 							onclick={sendMessage}
 							disabled={!inputMessage.trim() || isLoading}
-							class="flex items-center justify-center p-2 bg-white text-black rounded-lg hover:bg-slate-200 disabled:opacity-20 disabled:hover:scale-100 transition-all"
+							class="flex items-center gap-3 px-10 py-4 bg-blue-600 text-white text-xs font-black rounded-2xl hover:bg-blue-700 disabled:opacity-20 transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/20"
 						>
-							<Send size={18} fill="currentColor" />
+							<span>Send command</span>
+							<Send size={16} strokeWidth={3} />
 						</button>
 					</div>
 				</div>
-				<p class="text-center mt-3 text-[11px] font-medium text-slate-500">
-					TailBot can make mistakes. Check important info.
+				<p class="text-center mt-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+					Programming Tails • Neural Intelligence Core
 				</p>
 			</div>
 		</div>
@@ -290,76 +289,85 @@
 
 <style>
 	:global(body) {
-		background-color: #0d1117;
+		background-color: white;
 	}
+
+	.pl-13 { padding-left: 52px; }
 
 	.markdown-pro :global(h1),
 	.markdown-pro :global(h2),
 	.markdown-pro :global(h3) {
-		font-weight: 700;
-		color: #fff;
-		margin-top: 24px;
-		margin-bottom: 12px;
+		font-weight: 900;
+		color: #0f172a;
+		margin-top: 32px;
+		margin-bottom: 16px;
+		letter-spacing: -0.02em;
 	}
-	.markdown-pro :global(h1) { font-size: 1.4rem; }
-	.markdown-pro :global(h2) { font-size: 1.25rem; }
+	.markdown-pro :global(h1) { font-size: 1.6rem; }
+	.markdown-pro :global(h2) { font-size: 1.3rem; }
 	.markdown-pro :global(h3) { font-size: 1.1rem; }
 	
-	.markdown-pro :global(p) { margin-bottom: 16px; }
+	.markdown-pro :global(p) { margin-bottom: 20px; }
 	
 	.markdown-pro :global(code) {
-		background: #1f2937;
-		padding: 2px 4px;
-		border-radius: 4px;
+		background: #f1f5f9;
+		padding: 3px 6px;
+		border-radius: 6px;
 		font-size: 0.9em;
-		font-weight: 600;
-		color: #93c5fd;
+		font-weight: 800;
+		color: #2563eb;
 	}
 	
 	.markdown-pro :global(pre) {
-		background: #161b22 !important;
-		color: #e6edf3 !important;
-		padding: 16px !important;
-		border-radius: 12px !important;
-		margin: 20px 0 !important;
-		border: 1px solid #30363d !important;
+		background: #0f172a !important;
+		color: #f8fafc !important;
+		padding: 28px !important;
+		border-radius: 20px !important;
+		margin: 24px 0 !important;
+		border: 1px solid #1e293b !important;
 		overflow-x: auto;
+		box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1);
 	}
 
 	.markdown-pro :global(pre code) {
 		background: transparent !important;
 		padding: 0 !important;
 		color: inherit !important;
-		font-weight: 400;
+		font-weight: 500;
 	}
 
 	.markdown-pro :global(ul) {
 		list-style-type: disc;
-		padding-left: 24px;
-		margin-bottom: 16px;
+		padding-left: 28px;
+		margin-bottom: 20px;
 	}
 
 	.markdown-pro :global(li) {
-		margin-bottom: 8px;
+		margin-bottom: 10px;
+		font-weight: 600;
 	}
 
 	.markdown-pro :global(strong) {
-		font-weight: 700;
-		color: #fff;
+		font-weight: 900;
+		color: #2563eb;
 	}
 
-	/* Hidden Scrollbar */
+	/* Hidden but functional Scrollbar */
 	::-webkit-scrollbar {
-		width: 8px;
+		width: 6px;
 	}
 	::-webkit-scrollbar-track {
 		background: transparent;
 	}
 	::-webkit-scrollbar-thumb {
-		background: #30363d;
+		background: #e2e8f0;
 		border-radius: 10px;
 	}
 	::-webkit-scrollbar-thumb:hover {
-		background: #484f58;
+		background: #cbd5e1;
+	}
+
+	@media (max-width: 640px) {
+		.pl-13 { padding-left: 0; }
 	}
 </style>
