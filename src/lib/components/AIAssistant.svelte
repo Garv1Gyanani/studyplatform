@@ -22,10 +22,7 @@
 	async function scrollToBottom() {
 		await tick();
 		if (scrollContainer) {
-			scrollContainer.scrollTo({
-				top: scrollContainer.scrollHeight,
-				behavior: 'smooth'
-			});
+			scrollContainer.scrollTop = scrollContainer.scrollHeight;
 		}
 	}
 
@@ -104,40 +101,40 @@
 	});
 </script>
 
-<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 font-sans">
+<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 font-sans antialiased text-[#1a1c1e]">
 	{#if isOpen}
 		<div
 			transition:fly={{ y: 20, duration: 300 }}
-			class="flex flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-2xl transition-all duration-300"
+			class="flex flex-col overflow-hidden rounded-[24px] border border-[#e3e3e3] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-300"
 			class:h-[500px]={!isMinimized}
 			class:w-[380px]={!isMinimized}
 			class:h-auto={isMinimized}
 			class:w-[300px]={isMinimized}
 		>
 			<!-- Header -->
-			<div class="flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
+			<div class="flex items-center justify-between bg-white border-b border-[#f0f0f0] p-4">
 				<div class="flex items-center gap-3">
-					<div class="rounded-full bg-white/20 p-2">
-						<Sparkles size={18} class="text-yellow-300" />
+					<div class="h-8 w-8 rounded-lg bg-black flex items-center justify-center text-white">
+						<Bot size={16} strokeWidth={2.5} />
 					</div>
 					<div>
-						<h3 class="text-sm font-bold">Programming Tails Bot</h3>
-						<span class="flex items-center gap-1 text-[10px] opacity-80">
-							<span class="h-1.5 w-1.5 rounded-full bg-green-400"></span>
-							Online
+						<h3 class="text-xs font-black tracking-tight">TailBot</h3>
+						<span class="flex items-center gap-1 text-[9px] font-bold text-[#34a853] uppercase tracking-widest">
+							<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+							Active
 						</span>
 					</div>
 				</div>
 				<div class="flex items-center gap-1">
 					<button
 						onclick={() => (isMinimized = !isMinimized)}
-						class="rounded-lg p-1.5 transition-colors hover:bg-white/10"
+						class="rounded-lg p-1.5 transition-colors hover:bg-[#f0f0f0] text-[#5f6368]"
 					>
 						<Minus size={18} />
 					</button>
 					<button
 						onclick={() => (isOpen = false)}
-						class="rounded-lg p-1.5 transition-colors hover:bg-white/10"
+						class="rounded-lg p-1.5 transition-colors hover:bg-[#f0f0f0] text-[#5f6368]"
 					>
 						<X size={18} />
 					</button>
@@ -148,89 +145,80 @@
 				<!-- Messages Area -->
 				<div
 					bind:this={scrollContainer}
-					class="flex-1 overflow-y-auto bg-slate-50 p-4 scrollbar-thin scrollbar-thumb-blue-200"
+					class="flex-1 overflow-y-auto bg-white p-4 scrollbar-hide space-y-4"
 				>
-					<div class="flex flex-col gap-4">
-						{#each messages as message}
-							<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
+					{#each messages as message}
+						<div class="flex gap-3 {message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}">
+							<div class={cn(
+								"h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border text-[10px] font-black",
+								message.role === 'assistant' ? "bg-black text-white border-black" : "bg-white text-[#5f6368] border-[#e3e3e3]"
+							)}>
+								{message.role === 'assistant' ? 'T' : 'U'}
+							</div>
+							<div class="flex flex-col max-w-[80%] {message.role === 'user' ? 'items-end' : 'items-start'}">
 								<div
-									class="max-w-[85%] rounded-2xl p-3 shadow-sm {message.role === 'user'
-										? 'bg-blue-600 text-white rounded-tr-none'
-										: 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'}"
+									class="rounded-[20px] px-4 py-2.5 shadow-sm text-sm font-medium leading-relaxed {message.role === 'user'
+										? 'bg-blue-600 text-white rounded-tr-[4px]'
+										: 'bg-[#f1f3f4] text-[#1a1c1e] rounded-tl-[4px]'}"
 								>
-									<div class="flex items-start gap-2">
-										{#if message.role === 'assistant'}
-											<Bot size={14} class="mt-1 flex-shrink-0 text-blue-500" />
-										{/if}
-										<div class="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed">
-											{@html marked(message.content)}
-										</div>
-									</div>
-									<div
-										class="mt-1 text-right text-[10px] {message.role === 'user'
-											? 'text-blue-100'
-											: 'text-slate-400'}"
-									>
-										{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+									<div class="markdown-compact">
+										{@html marked(message.content)}
 									</div>
 								</div>
+								<span class="mt-1 px-1 text-[9px] font-bold text-[#bdc1c6] uppercase">
+									{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+								</span>
 							</div>
-						{/each}
-						
-						{#if isLoading}
-							<div class="flex justify-start" in:fade>
-								<div class="flex gap-1 rounded-full bg-white px-4 py-2 shadow-sm border border-slate-100">
-									<span class="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-400"></span>
-									<span class="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:0.2s]"></span>
-									<span class="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-600 [animation-delay:0.4s]"></span>
-								</div>
+						</div>
+					{/each}
+					
+					{#if isLoading}
+						<div class="flex gap-3" in:fade>
+							<div class="h-7 w-7 rounded-lg bg-black flex items-center justify-center text-white animate-pulse">
+								<Bot size={14} />
 							</div>
-						{/if}
-					</div>
+							<div class="bg-[#f1f3f4] rounded-[20px] px-4 py-2 flex items-center gap-1.5">
+								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce"></div>
+								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce [animation-delay:0.2s]"></div>
+								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce [animation-delay:0.4s]"></div>
+							</div>
+						</div>
+					{/if}
 				</div>
 
 				<!-- Input Area -->
-				<div class="border-t bg-white p-4">
-					<div class="flex gap-2">
+				<div class="border-t border-[#f0f0f0] p-4 bg-white">
+					<div class="relative flex items-end gap-2 bg-[#f8f9fa] border border-[#e3e3e3] rounded-[20px] p-1.5 focus-within:border-black transition-all">
+						<textarea
+							bind:value={inputMessage}
+							onkeydown={handleKeydown}
+							placeholder="Ask Programming Tails..."
+							class="flex-1 max-h-32 min-h-[40px] bg-transparent border-none px-3 py-2 text-sm font-semibold focus:ring-0 resize-none placeholder:text-[#9aa0a6]"
+							rows="1"
+						></textarea>
 						<button
-							onclick={clearChat}
-							class="rounded-xl border border-slate-200 p-2 text-slate-400 transition-colors hover:bg-slate-50 hover:text-red-500"
-							title="Clear chat"
+							onclick={sendMessage}
+							disabled={!inputMessage.trim() || isLoading}
+							class="h-9 w-9 flex items-center justify-center rounded-full bg-black text-white shadow-md transition-all hover:bg-zinc-800 disabled:opacity-20"
 						>
-							<Trash2 size={20} />
+							<Send size={16} strokeWidth={2.5} />
 						</button>
-						<div class="relative flex-1">
-							<textarea
-								bind:value={inputMessage}
-								onkeydown={handleKeydown}
-								placeholder="Ask me anything..."
-								class="max-h-32 min-h-[44px] w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-12 text-sm focus:border-blue-500 focus:bg-white focus:outline-none transition-all"
-								rows="1"
-							></textarea>
-							<button
-								onclick={sendMessage}
-								disabled={!inputMessage.trim() || isLoading}
-								class="absolute right-1.5 top-1.5 rounded-lg bg-blue-600 p-2 text-white shadow-md transition-all hover:bg-blue-700 disabled:bg-slate-300"
-							>
-								<Send size={16} />
-							</button>
-						</div>
 					</div>
 				</div>
 			{/if}
 		</div>
 	{/if}
 
-	<!-- Toggle Button -->
+	<!-- Compact Toggle -->
 	{#if !isOpen}
 		<button
 			transition:fade
 			onclick={() => (isOpen = true)}
-			class="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl transition-all duration-300 hover:scale-110 hover:shadow-blue-500/25 active:scale-95"
+			class="group h-14 w-14 flex items-center justify-center rounded-full bg-black text-white shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)] transition-all duration-300 hover:scale-105 active:scale-95"
 		>
-			<div class="absolute inset-0 animate-pulse rounded-full bg-blue-500/20"></div>
-			<MessageSquare class="relative z-10 transition-transform group-hover:rotate-12" />
-			<div class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md border-2 border-white">
+			<div class="absolute inset-0 rounded-full border-2 border-black animate-ping opacity-10"></div>
+			<Bot size={24} strokeWidth={2.5} class="transition-transform group-hover:scale-110" />
+			<div class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white border-2 border-white shadow-sm">
 				1
 			</div>
 		</button>
@@ -238,18 +226,27 @@
 </div>
 
 <style>
-	/* Custom scrollbar for better look */
-	.scrollbar-thin::-webkit-scrollbar {
-		width: 6px;
+	.scrollbar-hide::-webkit-scrollbar { display: none; }
+	.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+	.markdown-compact :global(p) { margin: 0; }
+	.markdown-compact :global(p + p) { margin-top: 8px; }
+	.markdown-compact :global(pre) {
+		background: #000 !important;
+		color: #fff !important;
+		padding: 12px !important;
+		border-radius: 12px !important;
+		margin: 8px 0 !important;
+		font-size: 12px !important;
 	}
-	.scrollbar-thin::-webkit-scrollbar-track {
-		background: transparent;
+	.markdown-compact :global(code) {
+		background: rgba(0,0,0,0.05);
+		padding: 1px 3px;
+		border-radius: 4px;
 	}
-	.scrollbar-thin::-webkit-scrollbar-thumb {
-		background: #e2e8f0;
-		border-radius: 10px;
-	}
-	.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-		background: #cbd5e1;
+	.markdown-compact :global(ul) {
+		list-style-type: disc;
+		padding-left: 16px;
+		margin: 8px 0;
 	}
 </style>

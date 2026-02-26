@@ -5,14 +5,14 @@
 		Bot, 
 		User, 
 		Trash2, 
-		Sparkles, 
-		ChevronRight, 
 		Plus, 
 		MessageSquare, 
 		Settings,
-		Search,
 		History,
-		Paperclip
+		Paperclip,
+		ChevronLeft,
+		ChevronRight,
+		Menu
 	} from 'lucide-svelte';
 	import { onMount, tick } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
@@ -41,10 +41,7 @@
 	async function scrollToBottom() {
 		await tick();
 		if (scrollContainer) {
-			scrollContainer.scrollTo({
-				top: scrollContainer.scrollHeight,
-				behavior: 'smooth'
-			});
+			scrollContainer.scrollTop = scrollContainer.scrollHeight;
 		}
 	}
 
@@ -109,153 +106,170 @@
 	});
 </script>
 
-<div class="h-[calc(100vh-64px)] w-full flex bg-white font-sans text-slate-900 border-t border-slate-100">
-	<!-- Sidebar - History -->
+<div class="h-[calc(100vh-64px)] w-full flex bg-white font-sans text-[#1a1c1e] overflow-hidden">
+	<!-- Minimal Sidebar -->
 	<aside 
 		class={cn(
-			"flex flex-col border-r border-slate-200 bg-slate-50 transition-all duration-300",
-			sidebarOpen ? "w-64" : "w-0 overflow-hidden border-none"
+			"h-full bg-[#f9f9f9] border-r border-[#e3e3e3] transition-all duration-300 ease-in-out flex flex-col shrink-0",
+			sidebarOpen ? "w-72" : "w-0 overflow-hidden border-none"
 		)}
 	>
-		<div class="flex flex-col h-full w-64">
+		<div class="w-72 h-full flex flex-col">
 			<div class="p-4">
 				<button 
 					onclick={clearChat}
-					class="flex items-center gap-2 w-full p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-all text-sm font-semibold"
+					class="w-full flex items-center gap-3 px-4 py-3 bg-white border border-[#e3e3e3] rounded-xl hover:bg-[#f0f0f0] transition-colors text-sm font-bold shadow-sm"
 				>
 					<Plus size={16} />
-					New Chat
+					<span>New Session</span>
 				</button>
 			</div>
-			
-			<div class="flex-1 overflow-y-auto p-4 space-y-4">
-				<h3 class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent</h3>
-				<div class="space-y-1">
-					{#each chatHistory as history}
-						<button class="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-slate-200 transition-all text-left text-sm truncate">
-							<MessageSquare size={14} class="shrink-0 text-slate-400" />
-							<span class="truncate">{history.title}</span>
-						</button>
-					{/each}
-				</div>
+
+			<div class="flex-1 overflow-y-auto px-4 py-2 space-y-6">
+				<section>
+					<h3 class="text-[11px] font-black text-[#8e8e8e] uppercase tracking-wider mb-3 px-2">History</h3>
+					<div class="space-y-1">
+						{#each chatHistory as history}
+							<button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#ececec] transition-colors text-left group">
+								<MessageSquare size={14} class="text-[#8e8e8e] group-hover:text-black" />
+								<span class="text-sm font-semibold truncate flex-1">{history.title}</span>
+							</button>
+						{/each}
+					</div>
+				</section>
+			</div>
+
+			<div class="p-4 border-t border-[#e3e3e3]">
+				<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#ececec] transition-colors text-sm font-bold">
+					<Settings size={16} />
+					<span>Preferences</span>
+				</button>
 			</div>
 		</div>
 	</aside>
 
-	<!-- Main Chat -->
-	<main class="flex-1 flex flex-col relative overflow-hidden h-full">
-		<!-- Minimal Header -->
-		<header class="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-20">
-			<div class="flex items-center gap-3">
+	<!-- Main Stage -->
+	<main class="flex-1 flex flex-col h-full bg-white relative">
+		<!-- Ultra-clean Header -->
+		<header class="h-14 flex items-center justify-between px-6 border-b border-[#f0f0f0] bg-white/70 backdrop-blur-xl sticky top-0 z-10">
+			<div class="flex items-center gap-4">
 				<button 
 					onclick={() => sidebarOpen = !sidebarOpen}
-					class="p-2 transition-colors hover:bg-slate-100 rounded-lg text-slate-500"
+					class="p-2 hover:bg-[#f0f0f0] rounded-lg transition-colors text-[#5f6368]"
 				>
-					<History size={18} />
+					<Menu size={20} />
 				</button>
-				<div class="h-4 w-px bg-slate-200"></div>
-				<h2 class="text-sm font-bold tracking-tight">Programming Tails Bot</h2>
+				<h1 class="text-sm font-black tracking-tight flex items-center gap-2">
+					<div class="h-2 w-2 rounded-full bg-blue-500"></div>
+					Programming Tails Bot
+				</h1>
 			</div>
-			<div class="flex items-center gap-2">
-				<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-600 border border-green-100">
-					<span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-					Ready
+			
+			<div class="flex items-center gap-3">
+				<span class="text-[10px] font-black text-[#5f6368] uppercase tracking-widest bg-[#f1f3f4] px-2.5 py-1 rounded-full px-2">
+					v2.0 Professional
 				</span>
 			</div>
 		</header>
 
-		<!-- Messages Container -->
+		<!-- Unified Message Flow -->
 		<div 
 			bind:this={scrollContainer}
-			class="flex-1 overflow-y-auto scrollbar-hide"
+			class="flex-1 overflow-y-auto pt-8 pb-32"
 		>
-			<div class="w-full">
-				{#each messages as message}
-					<div class={cn(
-						"py-8 flex justify-center border-b border-slate-50 transition-colors",
-						message.role === 'assistant' ? "bg-slate-50/50" : "bg-white"
-					)}>
-						<div class="w-full max-w-3xl px-6 flex gap-6">
-							<div class={cn(
-								"h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border",
-								message.role === 'assistant' ? "bg-blue-600 border-blue-500 text-white" : "bg-white border-slate-200 text-slate-600 shadow-sm"
-							)}>
-								{#if message.role === 'assistant'}
-									<Bot size={18} />
-								{:else}
-									<User size={18} />
-								{/if}
+			<div class="max-w-4xl mx-auto w-full px-4 md:px-8 space-y-12">
+				{#each messages as message, i}
+					<div 
+						class="flex gap-6 group"
+						in:fade={{ duration: 200 }}
+					>
+						<div class={cn(
+							"h-9 w-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm border select-none",
+							message.role === 'assistant' 
+								? "bg-black border-black text-white" 
+								: "bg-white border-[#e3e3e3] text-[#5f6368]"
+						)}>
+							{#if message.role === 'assistant'}
+								<Bot size={18} strokeWidth={2.5} />
+							{:else}
+								<User size={18} strokeWidth={2.5} />
+							{/if}
+						</div>
+
+						<div class="flex-1 min-w-0">
+							<div class="flex items-center gap-2 mb-1.5">
+								<span class="text-[10px] font-black uppercase tracking-widest text-[#8e8e8e]">
+									{message.role === 'assistant' ? 'TailBot' : 'Student'}
+								</span>
+								<span class="text-[10px] font-bold text-[#bdc1c6] opacity-0 group-hover:opacity-100 transition-opacity">
+									{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+								</span>
 							</div>
-							<div class="flex-1 space-y-2">
-								<p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-									{message.role === 'assistant' ? 'TailBot' : 'You'}
-								</p>
-								<div class="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium">
-									{#if message.role === 'assistant'}
+
+							<div class="text-[#1a1c1e] text-[15px] leading-[1.6] font-medium selection:bg-blue-100 antialiased">
+								{#if message.role === 'assistant'}
+									<div class="markdown-container">
 										{@html marked(message.content)}
-									{:else}
-										<p class="whitespace-pre-wrap">{message.content}</p>
-									{/if}
-								</div>
+									</div>
+								{:else}
+									<p class="whitespace-pre-wrap">{message.content}</p>
+								{/if}
 							</div>
 						</div>
 					</div>
 				{/each}
 
 				{#if isLoading}
-					<div class="py-12 flex justify-center bg-slate-50/50 border-b border-slate-50">
-						<div class="w-full max-w-3xl px-6 flex gap-6">
-							<div class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white animate-pulse">
-								<Bot size={18} />
-							</div>
-							<div class="flex-1 space-y-4 pt-2">
-								<div class="h-2 w-24 bg-slate-200 rounded-full animate-pulse"></div>
-								<div class="space-y-2">
-									<div class="h-2 w-full bg-slate-100 rounded-full animate-pulse"></div>
-									<div class="h-2 w-3/4 bg-slate-100 rounded-full animate-pulse"></div>
-								</div>
+					<div class="flex gap-6 animate-pulse px-4 md:px-8">
+						<div class="h-9 w-9 rounded-xl bg-[#f1f3f4] shrink-0"></div>
+						<div class="flex-1 space-y-4 pt-1">
+							<div class="h-2.5 w-24 bg-[#f1f3f4] rounded-full"></div>
+							<div class="space-y-2">
+								<div class="h-2.5 w-full bg-[#f8f9fa] rounded-full"></div>
+								<div class="h-2.5 w-2/3 bg-[#f8f9fa] rounded-full"></div>
 							</div>
 						</div>
 					</div>
 				{/if}
 			</div>
-			<!-- Bottom padding for input -->
-			<div class="h-32"></div>
 		</div>
 
-		<!-- Bottom Input Area -->
-		<div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-4 px-6 flex justify-center">
-			<div class="w-full max-w-3xl relative group">
-				<div class="relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all">
+		<!-- Clean Bottom Anchor -->
+		<div class="absolute bottom-0 inset-x-0 p-6 md:p-8 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none">
+			<div class="max-w-3xl mx-auto w-full pointer-events-auto">
+				<div class="relative bg-[#ffffff] border border-[#d2d2d2] rounded-2xl shadow-sm focus-within:border-black focus-within:ring-4 focus-within:ring-black/5 transition-all overflow-hidden group">
 					<textarea 
 						bind:value={inputMessage}
 						onkeydown={handleKeydown}
-						placeholder="Send a message..."
-						class="w-full bg-transparent px-5 py-4 text-slate-800 outline-none resize-none min-h-[56px] h-[56px] text-sm font-medium placeholder:text-slate-400"
+						placeholder="What are we focusing on today?"
+						class="w-full bg-transparent px-5 py-4 text-sm font-bold text-black outline-none resize-none min-h-[56px] h-[56px] placeholder:text-[#9aa0a6]"
 					></textarea>
 					
 					<div class="flex items-center justify-between px-3 pb-3">
-						<div class="flex items-center gap-1">
-							<button class="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg">
-								<Paperclip size={16} />
+						<div class="flex items-center gap-0.5">
+							<button class="p-2 text-[#5f6368] hover:text-black hover:bg-[#f0f0f0] rounded-lg transition-colors">
+								<Paperclip size={18} />
 							</button>
-							<button class="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg" onclick={clearChat}>
-								<Trash2 size={16} />
+							<button 
+								onclick={clearChat}
+								class="p-2 text-[#5f6368] hover:text-[#ea4335] hover:bg-[#feeef0] rounded-lg transition-colors"
+							>
+								<Trash2 size={18} />
 							</button>
 						</div>
 						
 						<button 
 							onclick={sendMessage}
 							disabled={!inputMessage.trim() || isLoading}
-							class="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-black disabled:opacity-30 disabled:hover:bg-slate-900 transition-all shadow-lg shadow-slate-200"
+							class="flex items-center gap-2 px-6 py-2 bg-black text-white text-xs font-black rounded-lg hover:bg-zinc-800 disabled:opacity-20 disabled:hover:bg-black transition-all"
 						>
-							Send
-							<Send size={14} />
+							<span>Send Command</span>
+							<Send size={14} strokeWidth={2.5} />
 						</button>
 					</div>
 				</div>
-				<p class="text-center mt-3 text-[10px] font-medium text-slate-400 tracking-tight">
-					TailBot can make mistakes. Always check crucial information.
+				<p class="text-center mt-4 text-[11px] font-bold text-[#bdc1c6] uppercase tracking-tighter">
+					Programming Tails • Advanced Learning Interface
 				</p>
 			</div>
 		</div>
@@ -263,28 +277,69 @@
 </div>
 
 <style>
-	/* Standard typography improvements */
-	:global(.prose) {
-		font-size: 0.9375rem;
-	}
-	:global(.prose p) {
-		margin-bottom: 1.25em;
-	}
-	:global(.prose p:last-child) {
-		margin-bottom: 0;
-	}
-	:global(.prose pre) {
-		background: #0f172a !important;
-		padding: 1.5rem !important;
-		border-radius: 12px !important;
-		border: 1px solid rgba(255,255,255,0.1) !important;
+	:global(body) {
+		background-color: white;
 	}
 
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
+	.markdown-container :global(h1),
+	.markdown-container :global(h2),
+	.markdown-container :global(h3) {
+		font-weight: 800;
+		color: #000;
+		margin-top: 24px;
+		margin-bottom: 12px;
 	}
-	.scrollbar-hide {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
+	.markdown-container :global(h3) { font-size: 1.1rem; }
+	
+	.markdown-container :global(p) { margin-bottom: 16px; }
+	
+	.markdown-container :global(code) {
+		background: #f1f3f4;
+		padding: 2px 5px;
+		border-radius: 4px;
+		font-size: 0.9em;
+		font-weight: 600;
+	}
+	
+	.markdown-container :global(pre) {
+		background: #000 !important;
+		color: #fff !important;
+		padding: 24px !important;
+		border-radius: 16px !important;
+		margin: 20px 0 !important;
+		border: 1px solid #333 !important;
+		overflow-x: auto;
+	}
+
+	.markdown-container :global(pre code) {
+		background: transparent !important;
+		padding: 0 !important;
+		color: inherit !important;
+		font-weight: 400;
+	}
+
+	.markdown-container :global(ul) {
+		list-style-type: disc;
+		padding-left: 24px;
+		margin-bottom: 16px;
+	}
+
+	.markdown-container :global(li) {
+		margin-bottom: 8px;
+	}
+
+	/* Hide scrollbar but keep functionality */
+	::-webkit-scrollbar {
+		width: 6px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: #e3e3e3;
+		border-radius: 10px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: #d2d2d2;
 	}
 </style>
