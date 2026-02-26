@@ -126,7 +126,11 @@
 	function getAIHint() {
 		const q = questions[currentQuestionIndex];
 		const prompt = `I'm taking a quiz on "${quiz.title}". The question is: "${q.question}". The options are: ${q.options.map((o: any) => o.text).join(', ')}. Without giving me the direct answer, can you give me a subtle hint or explain the concept?`;
-		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		if (window.openTailBot) {
+			window.openTailBot(prompt);
+		} else {
+			window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		}
 	}
 </script>
 

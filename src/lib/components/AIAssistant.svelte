@@ -88,6 +88,14 @@
 		}
 	});
 
+	// Function to be called from external dispatch
+	export function openWithPrompt(prompt: string) {
+		isOpen = true;
+		isMinimized = false;
+		inputMessage = prompt;
+		sendMessage();
+	}
+
 	onMount(() => {
 		const handlePrompt = (e: any) => {
 			isOpen = true;
@@ -96,45 +104,50 @@
 			sendMessage();
 		};
 
+		// Also attach to window for global access
+		(window as any).openTailBot = (prompt: string) => {
+			handlePrompt({ detail: prompt });
+		};
+
 		window.addEventListener('ai-assistant-prompt', handlePrompt);
 		return () => window.removeEventListener('ai-assistant-prompt', handlePrompt);
 	});
 </script>
 
-<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 font-sans antialiased text-[#1a1c1e]">
+<div class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-4 font-sans antialiased text-slate-900">
 	{#if isOpen}
 		<div
 			transition:fly={{ y: 20, duration: 300 }}
-			class="flex flex-col overflow-hidden rounded-[24px] border border-[#e3e3e3] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] transition-all duration-300"
-			class:h-[500px]={!isMinimized}
-			class:w-[380px]={!isMinimized}
+			class="flex flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] transition-all duration-300"
+			class:h-[540px]={!isMinimized}
+			class:w-[400px]={!isMinimized}
 			class:h-auto={isMinimized}
-			class:w-[300px]={isMinimized}
+			class:w-[320px]={isMinimized}
 		>
 			<!-- Header -->
-			<div class="flex items-center justify-between bg-white border-b border-[#f0f0f0] p-4">
+			<div class="flex items-center justify-between bg-slate-900 p-4 text-white">
 				<div class="flex items-center gap-3">
-					<div class="h-8 w-8 rounded-lg bg-black flex items-center justify-center text-white">
-						<Bot size={16} strokeWidth={2.5} />
+					<div class="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+						<Bot size={18} strokeWidth={2.5} />
 					</div>
 					<div>
-						<h3 class="text-xs font-black tracking-tight">TailBot</h3>
-						<span class="flex items-center gap-1 text-[9px] font-bold text-[#34a853] uppercase tracking-widest">
-							<span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-							Active
+						<h3 class="text-sm font-black tracking-tight leading-none mb-1">TailBot</h3>
+						<span class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+							<span class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
+							Online
 						</span>
 					</div>
 				</div>
 				<div class="flex items-center gap-1">
 					<button
 						onclick={() => (isMinimized = !isMinimized)}
-						class="rounded-lg p-1.5 transition-colors hover:bg-[#f0f0f0] text-[#5f6368]"
+						class="rounded-lg p-2 transition-colors hover:bg-white/10 text-slate-400 hover:text-white"
 					>
 						<Minus size={18} />
 					</button>
 					<button
 						onclick={() => (isOpen = false)}
-						class="rounded-lg p-1.5 transition-colors hover:bg-[#f0f0f0] text-[#5f6368]"
+						class="rounded-lg p-2 transition-colors hover:bg-white/10 text-slate-400 hover:text-white"
 					>
 						<X size={18} />
 					</button>
@@ -145,27 +158,27 @@
 				<!-- Messages Area -->
 				<div
 					bind:this={scrollContainer}
-					class="flex-1 overflow-y-auto bg-white p-4 scrollbar-hide space-y-4"
+					class="flex-1 overflow-y-auto bg-slate-50/50 p-5 scrollbar-hide space-y-6"
 				>
 					{#each messages as message}
-						<div class="flex gap-3 {message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}">
+						<div class="flex gap-4 {message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}">
 							<div class={cn(
-								"h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border text-[10px] font-black",
-								message.role === 'assistant' ? "bg-black text-white border-black" : "bg-white text-[#5f6368] border-[#e3e3e3]"
+								"h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border text-[10px] font-black shadow-sm",
+								message.role === 'assistant' ? "bg-blue-600 text-white border-blue-500" : "bg-white text-slate-500 border-slate-200"
 							)}>
 								{message.role === 'assistant' ? 'T' : 'U'}
 							</div>
-							<div class="flex flex-col max-w-[80%] {message.role === 'user' ? 'items-end' : 'items-start'}">
+							<div class="flex flex-col max-w-[85%] {message.role === 'user' ? 'items-end' : 'items-start'}">
 								<div
-									class="rounded-[20px] px-4 py-2.5 shadow-sm text-sm font-medium leading-relaxed {message.role === 'user'
-										? 'bg-blue-600 text-white rounded-tr-[4px]'
-										: 'bg-[#f1f3f4] text-[#1a1c1e] rounded-tl-[4px]'}"
+									class="rounded-[20px] px-5 py-3 shadow-sm text-sm font-medium leading-relaxed {message.role === 'user'
+										? 'bg-slate-900 text-white rounded-tr-[4px]'
+										: 'bg-white text-slate-900 border border-slate-100 rounded-tl-[4px]'}"
 								>
 									<div class="markdown-compact">
 										{@html marked(message.content)}
 									</div>
 								</div>
-								<span class="mt-1 px-1 text-[9px] font-bold text-[#bdc1c6] uppercase">
+								<span class="mt-1.5 px-1 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
 									{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 								</span>
 							</div>
@@ -173,35 +186,35 @@
 					{/each}
 					
 					{#if isLoading}
-						<div class="flex gap-3" in:fade>
-							<div class="h-7 w-7 rounded-lg bg-black flex items-center justify-center text-white animate-pulse">
-								<Bot size={14} />
+						<div class="flex gap-4" in:fade>
+							<div class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white animate-pulse">
+								<Bot size={16} />
 							</div>
-							<div class="bg-[#f1f3f4] rounded-[20px] px-4 py-2 flex items-center gap-1.5">
-								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce"></div>
-								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce [animation-delay:0.2s]"></div>
-								<div class="h-1.5 w-1.5 rounded-full bg-[#bdc1c6] animate-bounce [animation-delay:0.4s]"></div>
+							<div class="bg-white border border-slate-100 rounded-[20px] px-5 py-3 flex items-center gap-1.5">
+								<div class="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce"></div>
+								<div class="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.2s]"></div>
+								<div class="h-1.5 w-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.4s]"></div>
 							</div>
 						</div>
 					{/if}
 				</div>
 
 				<!-- Input Area -->
-				<div class="border-t border-[#f0f0f0] p-4 bg-white">
-					<div class="relative flex items-end gap-2 bg-[#f8f9fa] border border-[#e3e3e3] rounded-[20px] p-1.5 focus-within:border-black transition-all">
+				<div class="border-t border-slate-100 p-5 bg-white">
+					<div class="relative flex items-end gap-3 bg-slate-50 border border-slate-200 rounded-[20px] p-2 focus-within:border-blue-600 focus-within:bg-white transition-all">
 						<textarea
 							bind:value={inputMessage}
 							onkeydown={handleKeydown}
-							placeholder="Ask Programming Tails..."
-							class="flex-1 max-h-32 min-h-[40px] bg-transparent border-none px-3 py-2 text-sm font-semibold focus:ring-0 resize-none placeholder:text-[#9aa0a6]"
+							placeholder="Type your message..."
+							class="flex-1 max-h-32 min-h-[44px] bg-transparent border-none px-3 py-2 text-sm font-bold focus:ring-0 resize-none placeholder:text-slate-400"
 							rows="1"
 						></textarea>
 						<button
 							onclick={sendMessage}
 							disabled={!inputMessage.trim() || isLoading}
-							class="h-9 w-9 flex items-center justify-center rounded-full bg-black text-white shadow-md transition-all hover:bg-zinc-800 disabled:opacity-20"
+							class="h-10 w-10 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:hover:scale-100"
 						>
-							<Send size={16} strokeWidth={2.5} />
+							<Send size={18} strokeWidth={2.5} />
 						</button>
 					</div>
 				</div>
@@ -209,17 +222,19 @@
 		</div>
 	{/if}
 
-	<!-- Compact Toggle -->
+	<!-- Signature Toggle -->
 	{#if !isOpen}
 		<button
 			transition:fade
 			onclick={() => (isOpen = true)}
-			class="group h-14 w-14 flex items-center justify-center rounded-full bg-black text-white shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)] transition-all duration-300 hover:scale-105 active:scale-95"
+			class="group h-16 w-16 flex items-center justify-center rounded-full bg-slate-900 text-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] transition-all duration-300 hover:scale-110 active:scale-95"
 		>
-			<div class="absolute inset-0 rounded-full border-2 border-black animate-ping opacity-10"></div>
-			<Bot size={24} strokeWidth={2.5} class="transition-transform group-hover:scale-110" />
-			<div class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white border-2 border-white shadow-sm">
-				1
+			<div class="absolute inset-0 rounded-full border-2 border-slate-900 animate-ping opacity-10"></div>
+			<div class="relative">
+				<Bot size={28} strokeWidth={2.5} class="transition-transform group-hover:rotate-12" />
+				<div class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[10px] font-black text-white border-4 border-slate-900 shadow-sm">
+					1
+				</div>
 			</div>
 		</button>
 	{/if}
@@ -230,23 +245,28 @@
 	.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 	.markdown-compact :global(p) { margin: 0; }
-	.markdown-compact :global(p + p) { margin-top: 8px; }
+	.markdown-compact :global(p + p) { margin-top: 10px; }
 	.markdown-compact :global(pre) {
 		background: #000 !important;
 		color: #fff !important;
-		padding: 12px !important;
+		padding: 16px !important;
 		border-radius: 12px !important;
-		margin: 8px 0 !important;
-		font-size: 12px !important;
+		margin: 12px 0 !important;
+		font-size: 13px !important;
+		font-weight: 500 !important;
 	}
 	.markdown-compact :global(code) {
 		background: rgba(0,0,0,0.05);
-		padding: 1px 3px;
+		padding: 2px 4px;
 		border-radius: 4px;
+		font-weight: 700;
 	}
 	.markdown-compact :global(ul) {
 		list-style-type: disc;
-		padding-left: 16px;
-		margin: 8px 0;
+		padding-left: 20px;
+		margin: 10px 0;
+	}
+	.markdown-compact :global(bold), .markdown-compact :global(strong) {
+		font-weight: 800;
 	}
 </style>

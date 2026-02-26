@@ -144,15 +144,21 @@
 		// but for now I will just call the service and show a simple modal or alert, 
 		// OR better: I'll make the AIAssistant respond to custom events.
 		const prompt = `Can you provide a concise summary and key takeaways for the course titled "${video.title}"? Here is the description: ${video.description}`;
-		// For now, I'll just open the assistant with a pre-filled prompt (if I add that capability) 
-		// or just call it directly. Let's redirect the user's intent to the assistant.
-		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		if (window.openTailBot) {
+			window.openTailBot(prompt);
+		} else {
+			window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		}
 	}
 
 	async function getAIExplanation() {
 		if (!video) return;
 		const prompt = `Can you explain the core concepts of "${video.title}" in simple terms for a beginner?`;
-		window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		if (window.openTailBot) {
+			window.openTailBot(prompt);
+		} else {
+			window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: prompt }));
+		}
 	}
 </script>
 

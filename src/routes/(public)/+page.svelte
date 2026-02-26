@@ -71,7 +71,13 @@
 						<ArrowRight size={20} />
 					</a>
 					<button
-						onclick={() => window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: 'Can you help me create a personalized study plan for learning modern programming?' }))}
+						onclick={() => {
+							if (window.openTailBot) {
+								window.openTailBot('Can you help me create a personalized study plan for learning modern programming?');
+							} else {
+								window.dispatchEvent(new CustomEvent('ai-assistant-prompt', { detail: 'Can you help me create a personalized study plan for learning modern programming?' }));
+							}
+						}}
 						class="inline-flex items-center gap-3 rounded-[24px] border-2 border-slate-100 bg-white px-10 py-5 text-basis font-black text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-200 hover:scale-105 active:scale-95"
 					>
 						AI Study Plan
